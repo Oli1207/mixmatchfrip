@@ -1,0 +1,952 @@
+import stripe
+import requests as http_requests
+
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db import transaction
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.db.models import Sum, Count, Q
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.response import Response
+
+from .models import (
+    Category, Subcategory, Product, ProductImage,
+    Wishlist, Cart, CartItem,
+    Order, OrderItem, PromoCode,
+)
+from .serializers import (
+    CategorySerializer, SubcategorySerializer,
+    ProductListSerializer, ProductDetailSerializer, ProductImageSerializer,
+    WishlistSerializer,
+    CartSerializer, CartItemSerializer,
+    OrderSerializer, OrderCreateSerializer,
+    PromoCodeSerializer,
+)
+
+SHIPPING_COSTS = {
+    'standard': 4.99,
+    'express':  12.99,
+    'pickup':   0.00,
+}
+
+
+# ─── helpers ─────────────────────────────────────────────────────────────────
+
+def get_or_create_cart(request):
+    """Retourne le Cart lié au user authentifié, ou au cart_id localStorage."""
+    from uuid import UUID
+
+    def _get_req_cart_id():
+        """Lit le cart_id depuis request.data (POST/PATCH) ou request.GET (GET/DELETE)."""
+        if hasattr(request, 'data') and request.data.get('cart_id'):
+            return str(request.data.get('cart_id'))
+        return request.GET.get('cart_id', '')
+
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        # Fusionne le panier anonyme localStorage si présent
+        anon_cart_id = _get_req_cart_id()
+        if anon_cart_id:
+            try:
+                anon_cart = Cart.objects.get(cart_id=UUID(anon_cart_id), user__isnull=True)
+                for item in anon_cart.items.all():
+                    ci, created = CartItem.objects.get_or_create(
+                        cart=cart, product=item.product,
+                        defaults={'qty': item.qty}
+                    )
+                    if not created:
+                        ci.qty += item.qty
+                        ci.save()
+                anon_cart.delete()
+            except Exception:
+                pass
+        return cart
+
+    # Panier anonyme via localStorage cart_id
+    req_cart_id = _get_req_cart_id()
+    if req_cart_id:
+        try:
+            cart = Cart.objects.filter(cart_id=UUID(req_cart_id), user__isnull=True).first()
+            if cart:
+                return cart
+        except Exception:
+            pass
+
+    return Cart.objects.create()
+
+
+# ─── Categories & Sous-categories ────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def category_list(request):
+    categories = Category.objects.all()
+    serializer = CategorySerializer(categories, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def subcategory_list(request):
+    subcategories = Subcategory.objects.select_related('category').all()
+    serializer = SubcategorySerializer(subcategories, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def subcategories_by_category(request, slug):
+    subcategories = Subcategory.objects.filter(category__slug=slug).select_related('category')
+    serializer = SubcategorySerializer(subcategories, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+# ─── Products ─────────────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def product_list(request):
+    qs = Product.objects.filter(is_available=True).select_related('category', 'subcategory').prefetch_related('images')
+
+    # Filters
+    category    = request.GET.get('category')
+    subcategory = request.GET.get('subcategory')
+    size        = request.GET.get('size')
+    condition   = request.GET.get('condition')
+    min_price   = request.GET.get('min_price')
+    max_price   = request.GET.get('max_price')
+    search      = request.GET.get('search', '').strip()
+    sort        = request.GET.get('sort', 'recent')
+
+    if category:
+        qs = qs.filter(category__slug=category)
+    if subcategory:
+        qs = qs.filter(subcategory__slug=subcategory)
+    if size:
+        qs = qs.filter(size=size)
+    if condition:
+        qs = qs.filter(condition=condition)
+    if min_price:
+        qs = qs.filter(price__gte=min_price)
+    if max_price:
+        qs = qs.filter(price__lte=max_price)
+    if search:
+        qs = qs.filter(name__icontains=search) | qs.filter(brand__icontains=search)
+
+    if sort == 'price_asc':
+        qs = qs.order_by('price')
+    elif sort == 'price_desc':
+        qs = qs.order_by('-price')
+    elif sort == 'recent':
+        qs = qs.order_by('-created_at')
+
+    serializer = ProductListSerializer(qs, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def product_detail(request, slug):
+    try:
+        product = Product.objects.select_related('category').prefetch_related('images').get(
+            slug=slug, is_available=True
+        )
+    except Product.DoesNotExist:
+        return Response({'detail': 'Produit introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ProductDetailSerializer(product, context={'request': request})
+    return Response(serializer.data)
+
+
+# ─── Wishlist ─────────────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def wishlist_list(request):
+    items = Wishlist.objects.filter(user=request.user).select_related('product')
+    serializer = WishlistSerializer(items, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def wishlist_toggle(request):
+    product_id = request.data.get('product_id')
+    if not product_id:
+        return Response({'detail': 'product_id requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        product = Product.objects.get(pk=product_id, is_available=True)
+    except Product.DoesNotExist:
+        return Response({'detail': 'Produit introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+    if not created:
+        item.delete()
+        return Response({'status': 'removed'})
+    return Response({'status': 'added'}, status=status.HTTP_201_CREATED)
+
+
+# ─── Cart ─────────────────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def cart_detail(request):
+    cart = get_or_create_cart(request)
+    serializer = CartSerializer(cart, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def cart_add(request):
+    """
+    Body: { product_id, qty }
+    """
+    product_id = request.data.get('product_id')
+    qty        = int(request.data.get('qty', 1))
+
+    if not product_id:
+        return Response({'detail': 'product_id requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    if qty < 1:
+        return Response({'detail': 'Quantité invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        product = Product.objects.get(pk=product_id, is_available=True)
+    except Product.DoesNotExist:
+        return Response({'detail': 'Produit introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if product.stock < qty:
+        return Response({'detail': f'Stock insuffisant (disponible: {product.stock}).'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    cart = get_or_create_cart(request)
+    item, created = CartItem.objects.get_or_create(cart=cart, product=product, defaults={'qty': qty})
+    if not created:
+        item.qty += qty
+        item.save()
+
+    serializer = CartSerializer(cart, context={'request': request})
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['PATCH'])
+@permission_classes([AllowAny])
+def cart_item_update(request, item_id):
+    """Body: { qty }"""
+    qty = request.data.get('qty')
+    if qty is None:
+        return Response({'detail': 'qty requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    qty = int(qty)
+    cart = get_or_create_cart(request)
+
+    try:
+        item = cart.items.get(pk=item_id)
+    except CartItem.DoesNotExist:
+        return Response({'detail': 'Article introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if qty < 1:
+        item.delete()
+    else:
+        if item.product.stock < qty:
+            return Response({'detail': f'Stock insuffisant (disponible: {item.product.stock}).'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        item.qty = qty
+        item.save()
+
+    serializer = CartSerializer(cart, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def cart_item_remove(request, item_id):
+    cart = get_or_create_cart(request)
+    try:
+        item = cart.items.get(pk=item_id)
+        item.delete()
+    except CartItem.DoesNotExist:
+        return Response({'detail': 'Article introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CartSerializer(cart, context={'request': request})
+    return Response(serializer.data)
+
+
+# ─── Orders ───────────────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def order_create(request):
+    """
+    Crée une commande à partir du panier actif de l'utilisateur.
+    Body: adresse de livraison + shipping_method
+    """
+    serializer = OrderCreateSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    cart = get_or_create_cart(request)
+    if cart.item_count == 0:
+        return Response({'detail': 'Le panier est vide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    data            = serializer.validated_data
+    shipping_method = data['shipping_method']
+    shipping_cost   = float(data.get('shipping_cost', 0))
+    if shipping_method == 'pickup':
+        shipping_cost = 0.00
+    subtotal        = float(cart.subtotal)
+    tax             = 0.0
+
+    # Appliquer le code promo si fourni
+    promo_code_str  = request.data.get('promo_code', '').strip().upper()
+    discount        = float(request.data.get('discount', 0))
+    if promo_code_str and discount == 0:
+        try:
+            promo = PromoCode.objects.get(code=promo_code_str)
+            valid, _ = promo.is_valid(subtotal)
+            if valid:
+                discount = promo.compute_discount(subtotal)
+        except PromoCode.DoesNotExist:
+            pass
+
+    total = round(max(0, subtotal - discount) + shipping_cost, 2)
+
+    order = Order.objects.create(
+        user            = request.user,
+        first_name      = data['first_name'],
+        last_name       = data['last_name'],
+        email           = data['email'],
+        phone           = data['phone'],
+        address         = data['address'],
+        city            = data['city'],
+        province        = data['province'],
+        postal_code     = data['postal_code'],
+        instructions    = data.get('instructions', ''),
+        shipping_method = shipping_method,
+        shipping_cost   = shipping_cost,
+        subtotal        = subtotal,
+        tax             = tax,
+        total           = total,
+    )
+
+    # Incrementer le compteur d'utilisation du code promo
+    if promo_code_str:
+        try:
+            from django.db.models import F
+            PromoCode.objects.filter(code=promo_code_str).update(used_count=F('used_count') + 1)
+        except Exception:
+            pass
+
+    # Créer les OrderItems depuis le Cart et décrémente le stock
+    for item in cart.items.select_related('product').all():
+        OrderItem.objects.create(
+            order         = order,
+            product       = item.product,
+            product_name  = item.product.name,
+            product_brand = item.product.brand,
+            unit_price    = item.product.price,
+            qty           = item.qty,
+        )
+        item.product.stock = max(0, item.product.stock - item.qty)
+        item.product.save(update_fields=['stock'])
+
+    # Vider le panier
+    cart.items.all().delete()
+
+    return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def order_list(request):
+    orders = Order.objects.filter(user=request.user).prefetch_related('items')
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def order_detail(request, order_number):
+    try:
+        order = Order.objects.prefetch_related('items').get(
+            order_number=order_number, user=request.user
+        )
+    except Order.DoesNotExist:
+        return Response({'detail': 'Commande introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = OrderSerializer(order)
+    return Response(serializer.data)
+
+
+# ─── Paystack Webhook ─────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def paystack_webhook(request):
+    """
+    Reçoit les événements Paystack (charge.success) et marque la commande comme payée.
+    À sécuriser avec la vérification HMAC en production.
+    """
+    event = request.data.get('event')
+    data  = request.data.get('data', {})
+
+    if event == 'charge.success':
+        reference = data.get('reference', '')
+        try:
+            order = Order.objects.get(payment_ref=reference, is_paid=False)
+            order.is_paid  = True
+            order.paid_at  = timezone.now()
+            order.status   = 'confirmed'
+            order.save(update_fields=['is_paid', 'paid_at', 'status'])
+        except Order.DoesNotExist:
+            pass
+
+    return Response({'status': 'ok'})
+
+
+# ─── Stripe : créer la session de paiement ────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def stripe_checkout_view(request, order_number):
+    """
+    Crée une session Stripe Checkout et retourne l'URL de redirection.
+    Inspiré du projet lips_empire_by_arielle.
+    """
+    try:
+        order = Order.objects.get(order_number=order_number, user=request.user)
+    except Order.DoesNotExist:
+        return Response({'detail': 'Commande introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if order.is_paid:
+        return Response({'detail': 'Commande déjà payée.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not settings.STRIPE_SECRET_KEY:
+        return Response({'detail': 'Stripe non configuré.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    frontend_url = settings.FRONTEND_URL
+
+    try:
+        session = stripe.checkout.Session.create(
+            customer_email=order.email,
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'cad',
+                    'product_data': {
+                        'name': f'Commande MixMatchFrip #{order.order_number}',
+                    },
+                    'unit_amount': int(order.total * 100),  # en cents
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=f'{frontend_url}/payment-success/{order.order_number}?session_id={{CHECKOUT_SESSION_ID}}',
+            cancel_url=f'{frontend_url}/payment-failed/{order.order_number}',
+        )
+
+        # Stocker l'ID de session pour vérification ultérieure
+        order.payment_ref = session.id
+        order.save(update_fields=['payment_ref'])
+
+        return Response({'checkout_url': session.url})
+
+    except stripe.error.StripeError as e:
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ─── Stripe : confirmer le paiement après retour ──────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def payment_success_view(request, order_number):
+    """
+    Appelé par PaymentSuccessScreen après la redirection Stripe.
+    Vérifie la session Stripe, marque la commande payée, envoie l'email.
+    Inspiré du projet lips_empire_by_arielle.
+    """
+    session_id = request.data.get('session_id', '').strip()
+    if not session_id:
+        return Response({'detail': 'Session ID requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # select_for_update pour éviter les doubles traitements (race condition)
+    with transaction.atomic():
+        try:
+            order = Order.objects.select_for_update().get(order_number=order_number)
+        except Order.DoesNotExist:
+            return Response({'detail': 'Commande introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Déjà traitée — retourner sans re-envoyer l'email
+        if order.is_paid:
+            return Response(OrderSerializer(order).data)
+
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+        except stripe.error.StripeError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if session.payment_status == 'paid':
+            order.is_paid     = True
+            order.payment_ref = session_id
+            order.paid_at     = timezone.now()
+            order.status      = 'confirmed'
+            order.save(update_fields=['is_paid', 'payment_ref', 'paid_at', 'status'])
+
+            # Envoyer l'email de confirmation
+            _send_order_confirmation_email(order)
+
+            return Response(OrderSerializer(order).data)
+
+        elif session.payment_status == 'unpaid':
+            return Response({'detail': 'Paiement non complété.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'detail': 'Paiement annulé.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def _send_order_confirmation_email(order):
+    """Envoie l'email de confirmation de commande au client."""
+    try:
+        order_items = order.items.select_related('product').all()
+        context = {'order': order, 'order_items': order_items}
+        subject  = f'MixMatchFrip — Commande #{order.order_number} confirmée ✓'
+        text_body = render_to_string('email/order_confirmation.txt',  context)
+        html_body = render_to_string('email/order_confirmation.html', context)
+        send_mail(
+            subject      = subject,
+            message      = text_body,
+            from_email   = settings.DEFAULT_FROM_EMAIL,
+            recipient_list = [order.email],
+            html_message = html_body,
+            fail_silently = True,  # ne pas bloquer si l'email échoue
+        )
+    except Exception:
+        pass
+
+
+# ─── Shipping rates (Chit Chats) ──────────────────────────────────────────────
+
+# Mapping premiere lettre du code postal → province canadienne
+_POSTAL_TO_PROVINCE = {
+    'A': 'NL', 'B': 'NS', 'C': 'PE', 'E': 'NB',
+    'G': 'QC', 'H': 'QC', 'J': 'QC',
+    'K': 'ON', 'L': 'ON', 'M': 'ON', 'N': 'ON', 'P': 'ON',
+    'R': 'MB', 'S': 'SK', 'T': 'AB', 'V': 'BC',
+    'X': 'NT', 'Y': 'YT',
+}
+
+def _province_from_postal(postal_code):
+    return _POSTAL_TO_PROVINCE.get(postal_code[0].upper() if postal_code else '', 'QC')
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def shipping_rates(request):
+    """
+    Retourne les options de livraison via Chit Chats.
+    Fallback sur tarifs statiques si les credentials sont absents.
+    """
+    import logging
+    log = logging.getLogger(__name__)
+
+    destination = request.data.get('postal_code', '').replace(' ', '').upper()
+    weight_g    = int(request.data.get('weight_g', 500))
+
+    if not destination:
+        return Response({'detail': 'Code postal requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    token     = settings.CHITCHATS_ACCESS_TOKEN
+    client_id = settings.CHITCHATS_CLIENT_ID
+
+    if token and client_id:
+        try:
+            rates = _get_chitchats_rates(destination, weight_g, token, client_id)
+            return Response(rates)
+        except Exception as exc:
+            log.error('Chit Chats API error: %s', exc)
+            if settings.DEBUG:
+                return Response(
+                    {'detail': f'Chit Chats: {exc}'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+    return Response(_static_shipping_rates())
+
+
+def _static_shipping_rates():
+    return [
+        {'code': 'chit_chats_canada_tracked',  'name': 'Chit Chats Standard — 5 a 7 jours', 'price': 4.99,  'days': '5-7'},
+        {'code': 'chit_chats_canada_priority',  'name': 'Chit Chats Prioritaire — 2 a 3 jours', 'price': 12.99, 'days': '2-3'},
+        {'code': 'pickup',                       'name': 'Retrait en magasin — Gratuit',         'price': 0.00,  'days': '0'},
+    ]
+
+
+# Ville representive par province pour le colis temporaire de tarification
+_PROVINCE_CITY = {
+    'AB': 'Calgary',       'BC': 'Vancouver',    'MB': 'Winnipeg',
+    'NB': 'Fredericton',   'NL': "St. John's",   'NS': 'Halifax',
+    'NT': 'Yellowknife',   'NU': 'Iqaluit',      'ON': 'Toronto',
+    'PE': 'Charlottetown', 'QC': 'Montreal',     'SK': 'Saskatoon',
+    'YT': 'Whitehorse',
+}
+
+
+def _get_chitchats_rates(destination_postal, weight_g, token, client_id):
+    """
+    Cree un colis temporaire Chit Chats avec postage_type=unknown pour obtenir
+    les tarifs disponibles, puis supprime le colis immediatement.
+    Format de payload base sur la doc officielle Chit Chats.
+    """
+    import logging, re
+    log = logging.getLogger(__name__)
+
+    province_code = _province_from_postal(destination_postal)
+    city          = _PROVINCE_CITY.get(province_code, 'Montreal')
+    base_url      = f'https://chitchats.com/api/v1/clients/{client_id}/shipments'
+    headers       = {
+        'Authorization': token,
+        'Content-Type':  'application/json',
+    }
+
+    # Payload calque exactement sur la doc officielle Chit Chats
+    payload = {
+        'name':           'Client MixMatchFrip',
+        'address_1':      '1 Main St',
+        'city':           city,
+        'province_code':  province_code,
+        'postal_code':    destination_postal,
+        'country_code':   'CA',
+        'description':    'Vetements',
+        'value':          '50',
+        'value_currency': 'cad',
+        'package_type':   'parcel',
+        'size_unit':      'cm',
+        'size_x':         30,
+        'size_y':         20,
+        'size_z':         5,
+        'weight_unit':    'g',
+        'weight':         max(weight_g, 50),
+        'postage_type':   'unknown',
+        'ship_date':      'today',
+    }
+
+    resp = http_requests.post(base_url, json=payload, headers=headers, timeout=15)
+    log.debug('ChitChats create → HTTP %s\n%s', resp.status_code, resp.text[:800])
+
+    if not resp.ok:
+        raise Exception(f'HTTP {resp.status_code}: {resp.text[:500]}')
+
+    body = resp.json()
+
+    # Chit Chats peut retourner soit l'objet directement, soit wrappé dans "shipment"
+    data = body.get('shipment', body) if isinstance(body, dict) else {}
+
+    shipment_id = data.get('id')
+    rates_raw   = data.get('rates', [])
+
+    log.debug('ChitChats shipment_id=%s rates_count=%s', shipment_id, len(rates_raw))
+    if not rates_raw:
+        # Logguer la reponse complete pour faciliter le debug
+        log.error('ChitChats reponse complete: %s', resp.text[:1000])
+        raise Exception(
+            f'Aucun tarif retourne (id={shipment_id}). '
+            f'Reponse: {resp.text[:300]}'
+        )
+
+    # Supprimer le colis temporaire immediatement
+    if shipment_id:
+        try:
+            http_requests.delete(f'{base_url}/{shipment_id}', headers=headers, timeout=5)
+        except Exception:
+            pass
+
+    rates = []
+    for r in rates_raw:
+        postage_type  = r.get('postage_type', '')
+        description   = r.get('postage_description') or postage_type.replace('_', ' ').title()
+        delivery_desc = r.get('delivery_time_description', '')
+
+        # Extraire le nombre de jours depuis la description ("2 business days" → "2")
+        days_match = re.search(r'(\d[\d\-]*)', delivery_desc)
+        days       = days_match.group(1) if days_match else ''
+
+        # Prix total : total_fee est prioritaire, fallback sur postage_fee
+        raw_price = r.get('total_fee') or r.get('postage_fee') or '0'
+        try:
+            price = float(raw_price)
+        except (ValueError, TypeError):
+            price = 0.0
+
+        label = f'{description} — {delivery_desc}' if delivery_desc else description
+        rates.append({'code': postage_type, 'name': label, 'price': price, 'days': days})
+
+    # Trier par prix croissant
+    rates.sort(key=lambda x: x['price'])
+
+    # Ajouter retrait en magasin
+    rates.append({'code': 'pickup', 'name': 'Retrait en magasin \u2014 Gratuit', 'price': 0.00, 'days': '0'})
+    return rates
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ADMIN VIEWS  (IsAdminUser = is_staff=True requis)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ─── Stats dashboard ──────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_stats(request):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    total_revenue   = Order.objects.filter(is_paid=True).aggregate(t=Sum('total'))['t'] or 0
+    orders_today    = Order.objects.filter(created_at__date=timezone.now().date()).count()
+    pending_orders  = Order.objects.filter(status='pending').count()
+    total_orders    = Order.objects.count()
+    total_products  = Product.objects.filter(is_available=True).count()
+    low_stock       = Product.objects.filter(stock__lte=2, is_available=True).count()
+    total_clients   = User.objects.filter(is_staff=False).count()
+
+    # Revenus des 7 derniers jours
+    from datetime import timedelta
+    from django.db.models.functions import TruncDate
+    week_ago = timezone.now() - timedelta(days=7)
+    revenue_by_day = (
+        Order.objects
+        .filter(is_paid=True, paid_at__gte=week_ago)
+        .annotate(day=TruncDate('paid_at'))
+        .values('day')
+        .annotate(total=Sum('total'))
+        .order_by('day')
+    )
+
+    return Response({
+        'total_revenue':  float(total_revenue),
+        'orders_today':   orders_today,
+        'pending_orders': pending_orders,
+        'total_orders':   total_orders,
+        'total_products': total_products,
+        'low_stock':      low_stock,
+        'total_clients':  total_clients,
+        'revenue_by_day': list(revenue_by_day),
+    })
+
+
+# ─── Admin Products ───────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
+def admin_product_list(request):
+    if request.method == 'GET':
+        search = request.GET.get('search', '').strip()
+        qs = Product.objects.select_related('category').prefetch_related('images').order_by('-created_at')
+        if search:
+            qs = qs.filter(Q(name__icontains=search) | Q(brand__icontains=search))
+        serializer = ProductDetailSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    # POST — créer un produit
+    data = request.data
+    category_id = data.get('category')
+    try:
+        category = Category.objects.get(pk=category_id) if category_id else None
+    except Category.DoesNotExist:
+        return Response({'detail': 'Catégorie introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    product = Product.objects.create(
+        category       = category,
+        name           = data.get('name', ''),
+        brand          = data.get('brand', ''),
+        description    = data.get('description', ''),
+        price          = data.get('price', 0),
+        original_price = data.get('original_price') or None,
+        size           = data.get('size', 'M'),
+        condition      = data.get('condition', 'good'),
+        color          = data.get('color', ''),
+        stock          = int(data.get('stock', 1)),
+        is_available   = data.get('is_available', True),
+    )
+    return Response(ProductDetailSerializer(product, context={'request': request}).data,
+                    status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAdminUser])
+def admin_product_detail(request, pk):
+    try:
+        product = Product.objects.select_related('category').prefetch_related('images').get(pk=pk)
+    except Product.DoesNotExist:
+        return Response({'detail': 'Produit introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(ProductDetailSerializer(product, context={'request': request}).data)
+
+    if request.method == 'PUT':
+        data = request.data
+        category_id = data.get('category')
+        if category_id:
+            try:
+                product.category = Category.objects.get(pk=category_id)
+            except Category.DoesNotExist:
+                pass
+
+        for field in ['name', 'brand', 'description', 'price', 'original_price',
+                      'size', 'condition', 'color', 'stock', 'is_available']:
+            if field in data:
+                val = data[field]
+                if field == 'original_price' and val == '':
+                    val = None
+                setattr(product, field, val)
+        product.save()
+        return Response(ProductDetailSerializer(product, context={'request': request}).data)
+
+    # DELETE
+    product.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def admin_product_upload_image(request, pk):
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        return Response({'detail': 'Produit introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    image   = request.FILES.get('image')
+    is_main = request.data.get('is_main', False)
+    if not image:
+        return Response({'detail': 'Image requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if is_main:
+        product.images.update(is_main=False)
+
+    img = ProductImage.objects.create(product=product, image=image, is_main=bool(is_main))
+    return Response(ProductImageSerializer(img, context={'request': request}).data,
+                    status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def admin_product_delete_image(request, pk, image_id):
+    try:
+        img = ProductImage.objects.get(pk=image_id, product_id=pk)
+    except ProductImage.DoesNotExist:
+        return Response({'detail': 'Image introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    img.image.delete(save=False)
+    img.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Admin Orders ─────────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_order_list(request):
+    status_filter = request.GET.get('status')
+    search        = request.GET.get('search', '').strip()
+
+    qs = Order.objects.prefetch_related('items').select_related('user').order_by('-created_at')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if search:
+        qs = qs.filter(
+            Q(order_number__icontains=search) |
+            Q(first_name__icontains=search)   |
+            Q(last_name__icontains=search)    |
+            Q(email__icontains=search)
+        )
+    serializer = OrderSerializer(qs, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAdminUser])
+def admin_order_update_status(request, order_number):
+    try:
+        order = Order.objects.get(order_number=order_number)
+    except Order.DoesNotExist:
+        return Response({'detail': 'Commande introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    new_status = request.data.get('status')
+    valid = [s[0] for s in Order._meta.get_field('status').choices]
+    if new_status not in valid:
+        return Response({'detail': f'Statut invalide. Valeurs: {valid}'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    order.status = new_status
+    order.save(update_fields=['status'])
+    return Response(OrderSerializer(order).data)
+
+
+# ─── Admin Promo Codes ────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
+def admin_promo_list(request):
+    if request.method == 'GET':
+        promos = PromoCode.objects.all().order_by('-created_at')
+        return Response(PromoCodeSerializer(promos, many=True).data)
+
+    # POST — creer un code
+    serializer = PromoCodeSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH', 'DELETE'])
+@permission_classes([IsAdminUser])
+def admin_promo_detail(request, pk):
+    try:
+        promo = PromoCode.objects.get(pk=pk)
+    except PromoCode.DoesNotExist:
+        return Response({'detail': 'Code promo introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PATCH':
+        serializer = PromoCodeSerializer(promo, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE
+    promo.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Promo Apply (public — utilise par le checkout) ───────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def promo_apply(request):
+    """
+    Valide un code promo et retourne le montant de remise.
+    Body: { code: str, subtotal: float }
+    """
+    code     = request.data.get('code', '').strip().upper()
+    subtotal = float(request.data.get('subtotal', 0))
+
+    try:
+        promo = PromoCode.objects.get(code=code)
+    except PromoCode.DoesNotExist:
+        return Response({'detail': 'Code promo invalide.'}, status=status.HTTP_404_NOT_FOUND)
+
+    valid, msg = promo.is_valid(subtotal)
+    if not valid:
+        return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
+
+    discount_amount = promo.compute_discount(subtotal)
+    return Response({
+        'code':            promo.code,
+        'discount_type':   promo.discount_type,
+        'discount_value':  float(promo.discount_value),
+        'discount_amount': round(discount_amount, 2),
+    })

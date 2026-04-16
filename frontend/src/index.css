@@ -1,0 +1,145 @@
+/* =========================================
+   VARIABLES GLOBALES — Mix&Match Frip
+   ========================================= */
+:root {
+  --gold: #C9A84C;
+  --gold-light: #e2c97e;
+  --gold-dark: #a8882d;
+  --green: #3D5748;
+  --green-dark: #2e4438;
+  --green-light: #e8f0eb;
+  --black: #1a1a1a;
+  --white: #ffffff;
+  --cream: #faf8f4;
+  --cream-dark: #f2ede4;
+  --gray-placeholder: #e8e4dc;
+  --gray-light: #f5f5f5;
+  --gray-mid: #d0ccc4;
+  --gray-text: #6b6560;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Poppins', sans-serif;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+  --navbar-height: 72px;
+}
+
+/* =========================================
+   RESET & BASE
+   ========================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--white);
+  color: var(--black);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-serif);
+  line-height: 1.2;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+/* =========================================
+   UTILITAIRES
+   ========================================= */
+.gold-text { color: var(--gold); }
+.serif { font-family: var(--font-serif); }
+
+/* Bouton principal (anciennement gold, maintenant vert forêt) */
+.btn-gold {
+  display: inline-block;
+  background: var(--green);
+  color: var(--white);
+  padding: 13px 32px;
+  border: none;
+  border-radius: 24px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-gold:hover {
+  background: var(--green-dark);
+  color: var(--white);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Bouton outline dark */
+.btn-dark-outline {
+  display: inline-block;
+  background: transparent;
+  color: var(--black);
+  padding: 12px 30px;
+  border: 1.5px solid var(--black);
+  border-radius: 24px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-dark-outline:hover {
+  background: var(--black);
+  color: var(--white);
+}
+
+/* Bouton outline white */
+.btn-white-outline {
+  display: inline-block;
+  background: transparent;
+  color: var(--white);
+  padding: 12px 30px;
+  border: 1.5px solid var(--white);
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-white-outline:hover {
+  background: var(--white);
+  color: var(--black);
+}
+
+/* Placeholder image générique */
+.img-placeholder {
+  background: var(--gray-placeholder);
+  width: 100%;
+  height: 100%;
+}

@@ -1,0 +1,234 @@
+/* ── Color Picker ────────────────────────────────────────────────────────────── */
+.adm-color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adm-color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.adm-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.adm-color-swatch:hover {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.12);
+}
+.adm-color-swatch.selected {
+  box-shadow: 0 0 0 2.5px var(--gold);
+  transform: scale(1.1);
+}
+.adm-color-check {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.adm-color-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adm-color-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 99px;
+  padding: 3px 8px 3px 5px;
+  font-size: 11px;
+  color: var(--black);
+}
+.adm-color-tag__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.adm-color-tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--gray-text);
+  display: flex;
+  align-items: center;
+}
+
+/* ── Image Manager ────────────────────────────────────────────────────────────── */
+.adm-img-manager { width: 100%; }
+
+.adm-img-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.adm-img-thumb {
+  position: relative;
+  width: 80px;
+  height: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f0f0f0;
+  flex-shrink: 0;
+}
+.adm-img-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.adm-img-thumb--new {
+  border: 2px dashed var(--gold);
+}
+.adm-img-main-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  padding: 3px 0;
+  letter-spacing: 0.3px;
+}
+.adm-img-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.15s;
+}
+.adm-img-del:hover { background: #e74c3c; }
+
+.adm-img-add {
+  width: 80px;
+  height: 100px;
+  border-radius: 6px;
+  border: 2px dashed #d0d0d0;
+  background: #fafafa;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--gray-text);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  transition: border-color 0.15s, color 0.15s;
+}
+.adm-img-add:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Table color dots ──────────────────────────────────────────────────────────── */
+.adm-table-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.adm-table-color-dot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Modal */
+.adm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+.adm-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.adm-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+.adm-modal__title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--black);
+  margin: 0;
+}
+.adm-modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-text);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.adm-modal__close:hover { color: var(--black); }
+.adm-modal__body  { padding: 24px; }
+.adm-modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+}
+.adm-modal__error {
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #e53e3e;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}

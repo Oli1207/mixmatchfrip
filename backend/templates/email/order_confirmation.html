@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Commande confirmée — MixMatchFrip</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f0e8;font-family:'Georgia',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0e8;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:4px;overflow:hidden;max-width:600px;width:100%;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#0f0c0a;padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;font-family:'Georgia',serif;font-size:24px;font-weight:700;color:#c9a84c;letter-spacing:2px;">
+              MixMatchFrip
+            </h1>
+            <p style="margin:8px 0 0;font-size:12px;color:#888;letter-spacing:1px;text-transform:uppercase;">
+              Friperie en ligne · Montréal
+            </p>
+          </td>
+        </tr>
+
+        <!-- Success banner -->
+        <tr>
+          <td style="background:#e8f5ee;padding:20px 40px;text-align:center;border-bottom:1px solid #d0e8d8;">
+            <p style="margin:0;font-size:15px;color:#2d7a4f;font-weight:600;">
+              ✓ &nbsp;Commande confirmée — Paiement reçu
+            </p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 40px;">
+            <p style="margin:0 0 24px;font-size:15px;color:#333;">
+              Bonjour <strong>{{ order.first_name }}</strong>,
+            </p>
+            <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7;">
+              Merci pour votre achat ! Votre commande
+              <strong style="color:#0f0c0a;">#{{ order.order_number }}</strong>
+              a bien été reçue et votre paiement est confirmé.
+            </p>
+
+            <!-- Order items -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #f0ece4;border-radius:4px;overflow:hidden;margin-bottom:24px;">
+              <tr style="background:#f5f0e8;">
+                <td style="padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">Article</td>
+                <td style="padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;text-align:center;">Qté</td>
+                <td style="padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;text-align:right;">Prix</td>
+              </tr>
+              {% for item in order_items %}
+              <tr style="border-top:1px solid #f0ece4;">
+                <td style="padding:12px 16px;">
+                  <span style="font-size:13px;font-weight:600;color:#0f0c0a;">{{ item.product_name }}</span>
+                  {% if item.product_brand %}
+                  <br/><span style="font-size:11px;color:#888;">{{ item.product_brand }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding:12px 16px;text-align:center;font-size:13px;color:#555;">{{ item.qty }}</td>
+                <td style="padding:12px 16px;text-align:right;font-size:13px;color:#0f0c0a;font-weight:600;">{{ item.unit_price }} $</td>
+              </tr>
+              {% endfor %}
+            </table>
+
+            <!-- Totals -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+              <tr>
+                <td style="padding:4px 0;font-size:13px;color:#555;">Sous-total</td>
+                <td style="padding:4px 0;font-size:13px;color:#555;text-align:right;">{{ order.subtotal }} $</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 0;font-size:13px;color:#555;">Taxes (15%)</td>
+                <td style="padding:4px 0;font-size:13px;color:#555;text-align:right;">{{ order.tax }} $</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 0;font-size:13px;color:#555;">Livraison</td>
+                <td style="padding:4px 0;font-size:13px;color:#555;text-align:right;">{% if order.shipping_cost == 0 %}Gratuit{% else %}{{ order.shipping_cost }} ${% endif %}</td>
+              </tr>
+              <tr style="border-top:2px solid #f0ece4;">
+                <td style="padding:10px 0 4px;font-size:15px;font-weight:700;color:#0f0c0a;">Total payé</td>
+                <td style="padding:10px 0 4px;font-size:15px;font-weight:700;color:#c9a84c;text-align:right;">{{ order.total }} $</td>
+              </tr>
+            </table>
+
+            <!-- Shipping address -->
+            <div style="background:#f5f0e8;border-radius:4px;padding:16px 20px;margin-bottom:24px;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">Adresse de livraison</p>
+              <p style="margin:0;font-size:13px;color:#333;line-height:1.7;">
+                {{ order.first_name }} {{ order.last_name }}<br/>
+                {{ order.address }}<br/>
+                {{ order.city }}, {{ order.province }}&nbsp;&nbsp;{{ order.postal_code }}
+              </p>
+            </div>
+
+            <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
+              Vous recevrez un autre courriel dès que votre colis sera expédié avec les informations de suivi.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f5f0e8;padding:24px 40px;text-align:center;border-top:1px solid #e8e0d0;">
+            <p style="margin:0;font-size:12px;color:#888;line-height:1.6;">
+              Des questions ? Répondez à ce courriel ou contactez-nous.<br/>
+              <strong style="color:#0f0c0a;">MixMatchFrip</strong> · Montréal, Québec
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

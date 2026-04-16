@@ -1,0 +1,82 @@
+# =========================
+# 🔐 ENV & SECRETS
+# =========================
+.env
+.env.*
+*.env
+*.secret
+*.key
+
+# =========================
+# 🐍 PYTHON / DJANGO
+# =========================
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# migrations (optionnel)
+# si projet solo → ignore possible
+# si projet en équipe → NE PAS ignorer
+# */migrations/*
+# !*/migrations/__init__.py
+
+# =========================
+# 📦 VIRTUAL ENV
+# =========================
+.venv/
+venv/
+env/
+ENV/
+
+# =========================
+# 🧠 CLAUDE / AI FILES
+# =========================
+.claude/
+.claude-cache/
+.ai/
+*.prompt
+*.log
+
+# =========================
+# ⚛️ REACT / FRONTEND
+# =========================
+node_modules/
+build/
+dist/
+.next/
+out/
+
+# =========================
+# 🧪 TEST / COVERAGE
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =========================
+# 🧰 IDE / EDITORS
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# 🖥️ OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# 🗂️ LOGS
+# =========================
+*.log
+
+# =========================
+# 📤 UPLOADS TEMP
+# =========================
+tmp/
+temp/

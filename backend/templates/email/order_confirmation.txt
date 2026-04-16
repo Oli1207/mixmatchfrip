@@ -1,0 +1,27 @@
+Bonjour {{ order.first_name }},
+
+Votre commande a été confirmée et votre paiement a bien été reçu.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Commande #{{ order.order_number }}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{% for item in order_items %}• {{ item.product_name }}{% if item.product_brand %} — {{ item.product_brand }}{% endif %}
+  Qté : {{ item.qty }}  ·  {{ item.unit_price }} $ l'unité
+{% endfor %}
+
+Sous-total : {{ order.subtotal }} $
+Taxes (15%) : {{ order.tax }} $
+Livraison   : {{ order.shipping_cost }} $
+──────────────────────────────────
+Total payé  : {{ order.total }} $
+
+Adresse de livraison :
+{{ order.first_name }} {{ order.last_name }}
+{{ order.address }}
+{{ order.city }}, {{ order.province }}  {{ order.postal_code }}
+
+Vous recevrez un autre courriel dès que votre colis sera expédié.
+
+Merci pour votre achat chez MixMatchFrip !
+L'équipe MixMatchFrip

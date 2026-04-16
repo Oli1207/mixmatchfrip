@@ -1,0 +1,193 @@
+.mmf-footer {
+  background: var(--cream);
+  border-top: 1px solid var(--cream-dark);
+  font-family: var(--font-sans);
+}
+
+.mmf-footer__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Top ── */
+.mmf-footer__top {
+  padding: 64px 0 48px;
+}
+
+.mmf-footer__grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+
+/* Brand col */
+.mmf-footer__logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border-radius: 50%;
+  margin-bottom: 14px;
+}
+
+.mmf-footer__tagline {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-style: italic;
+  color: var(--gray-text);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.mmf-footer__newsletter-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--black);
+  margin-bottom: 10px;
+}
+
+.mmf-footer__newsletter {
+  display: flex;
+  border: 1px solid var(--gray-mid);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.mmf-footer__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: var(--white);
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--black);
+}
+.mmf-footer__input::placeholder { color: var(--gray-mid); }
+
+.mmf-footer__submit {
+  background: var(--black);
+  color: var(--white);
+  border: none;
+  padding: 10px 18px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background var(--transition);
+}
+.mmf-footer__submit:hover { background: var(--gold); }
+.mmf-footer__submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.mmf-footer__check-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--gray-text);
+  cursor: pointer;
+  line-height: 1.4;
+}
+.mmf-footer__check { margin-top: 2px; accent-color: var(--gold); }
+
+/* Generic cols */
+.mmf-footer__col-title {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--black);
+  margin-bottom: 16px;
+}
+
+.mmf-footer__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mmf-footer__link {
+  font-size: 13.5px;
+  color: var(--gray-text);
+  text-decoration: none;
+  transition: color var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mmf-footer__link:hover { color: var(--gold); }
+.mmf-footer__link--sale { color: #c0392b; font-weight: 600; }
+.mmf-footer__link--sale:hover { color: #c0392b; }
+.mmf-footer__link--icon { color: var(--gray-text); cursor: default; }
+.mmf-footer__link--icon:hover { color: var(--gold); cursor: pointer; }
+
+/* Socials */
+.mmf-footer__socials {
+  display: flex;
+  gap: 10px;
+}
+
+.mmf-footer__social {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--gray-mid);
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.mmf-footer__social:hover {
+  background: var(--gold);
+  color: var(--white);
+  border-color: var(--gold);
+}
+
+/* ── Bottom ── */
+.mmf-footer__bottom {
+  border-top: 1px solid var(--cream-dark);
+  padding: 20px 0;
+}
+
+.mmf-footer__bottom .mmf-footer__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mmf-footer__copy {
+  font-size: 12.5px;
+  color: var(--gray-text);
+  margin: 0;
+}
+
+.mmf-footer__sub-copy {
+  font-size: 12px;
+  color: var(--gray-mid);
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .mmf-footer__grid { grid-template-columns: 1fr 1fr; gap: 36px; }
+}
+
+@media (max-width: 640px) {
+  .mmf-footer__top { padding: 48px 0 36px; }
+  .mmf-footer__grid { grid-template-columns: 1fr; gap: 28px; }
+  .mmf-footer__container { padding: 0 16px; }
+  .mmf-footer__bottom .mmf-footer__container { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
