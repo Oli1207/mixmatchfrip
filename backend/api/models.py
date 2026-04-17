@@ -136,8 +136,13 @@ class Product(models.Model):
 
     @property
     def discount_percent(self):
-        if self.original_price and self.original_price > self.price:
-            return round((1 - float(self.price) / float(self.original_price)) * 100)
+        try:
+            op = float(self.original_price)
+            p  = float(self.price)
+            if op and op > p:
+                return round((1 - p / op) * 100)
+        except (TypeError, ValueError):
+            pass
         return 0
 
     @property

@@ -811,12 +811,16 @@ def admin_product_list(request):
     data = request.data
 
     # ── Validation des champs obligatoires ────────────────────────────────────
-    name  = (data.get('name') or '').strip()
-    price = data.get('price')
+    name      = (data.get('name') or '').strip()
+    price_raw = data.get('price')
     if not name:
         return Response({'detail': 'Le nom du produit est requis.'}, status=status.HTTP_400_BAD_REQUEST)
-    if price in ('', None):
+    if price_raw in ('', None):
         return Response({'detail': 'Le prix est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        price = float(price_raw)   # coerce string → float pour éviter les comparaisons str/float
+    except (ValueError, TypeError):
+        return Response({'detail': 'Le prix doit être un nombre valide.'}, status=status.HTTP_400_BAD_REQUEST)
 
     category_id    = data.get('category')
     subcategory_id = data.get('subcategory')
