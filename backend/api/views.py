@@ -281,11 +281,12 @@ def cart_item_remove(request, item_id):
 # ─── Orders ───────────────────────────────────────────────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def order_create(request):
     """
-    Crée une commande à partir du panier actif de l'utilisateur.
-    Body: adresse de livraison + shipping_method
+    Crée une commande à partir du panier actif.
+    Accessible aux utilisateurs connectés ET aux invités.
+    Body: adresse de livraison + shipping_method + (optionnel) create_account
     """
     serializer = OrderCreateSerializer(data=request.data)
     if not serializer.is_valid():
@@ -317,8 +318,11 @@ def order_create(request):
 
     total = round(max(0, subtotal - discount) + shipping_cost, 2)
 
+    # Utilisateur connecté ou invité
+    user = request.user if request.user.is_authenticated else None
+
     order = Order.objects.create(
-        user            = request.user,
+        user            = user,
         first_name      = data['first_name'],
         last_name       = data['last_name'],
         email           = data['email'],
@@ -358,6 +362,29 @@ def order_create(request):
 
     # Vider le panier
     cart.items.all().delete()
+
+    # ── Création de compte invité (optionnel) ──────────────────────────────────
+    create_account = str(request.data.get('create_account', '')).lower() in ('true', '1', 'yes')
+    if create_account and user is None:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        email = data['email']
+        if not User.objects.filter(email=email).exists():
+            try:
+                new_user = User(
+                    email      = email,
+                    first_name = data['first_name'],
+                    last_name  = data['last_name'],
+                    phone      = data['phone'],
+                )
+                new_user.set_password('12345678')
+                new_user.save()
+                order.user            = new_user
+                order.account_created = True
+                order.save(update_fields=['user', 'account_created'])
+            except Exception:
+                pass  # La commande reste valide même si la création de compte échoue
+    # ──────────────────────────────────────────────────────────────────────────
 
     return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
@@ -413,14 +440,14 @@ def paystack_webhook(request):
 # ─── Stripe : créer la session de paiement ────────────────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def stripe_checkout_view(request, order_number):
     """
     Crée une session Stripe Checkout et retourne l'URL de redirection.
-    Inspiré du projet lips_empire_by_arielle.
+    Accessible aux invités (pas de contrainte user=request.user).
     """
     try:
-        order = Order.objects.get(order_number=order_number, user=request.user)
+        order = Order.objects.get(order_number=order_number)
     except Order.DoesNotExist:
         return Response({'detail': 'Commande introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -513,17 +540,23 @@ def _send_order_confirmation_email(order):
     """Envoie l'email de confirmation de commande au client."""
     try:
         order_items = order.items.select_related('product').all()
-        context = {'order': order, 'order_items': order_items}
-        subject  = f'MixMatchFrip — Commande #{order.order_number} confirmée ✓'
+        context = {
+            'order':            order,
+            'order_items':      order_items,
+            'account_created':  order.account_created,
+            'account_email':    order.email if order.account_created else None,
+            'account_password': '12345678'  if order.account_created else None,
+        }
+        subject   = f'MixMatchFrip — Commande #{order.order_number} confirmée ✓'
         text_body = render_to_string('email/order_confirmation.txt',  context)
         html_body = render_to_string('email/order_confirmation.html', context)
         send_mail(
-            subject      = subject,
-            message      = text_body,
-            from_email   = settings.DEFAULT_FROM_EMAIL,
+            subject        = subject,
+            message        = text_body,
+            from_email     = settings.DEFAULT_FROM_EMAIL,
             recipient_list = [order.email],
-            html_message = html_body,
-            fail_silently = True,  # ne pas bloquer si l'email échoue
+            html_message   = html_body,
+            fail_silently  = True,
         )
     except Exception:
         pass

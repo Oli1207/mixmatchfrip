@@ -23,5 +23,20 @@ Adresse de livraison :
 
 Vous recevrez un autre courriel dès que votre colis sera expédié.
 
+{% if account_created %}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VOS IDENTIFIANTS DE CONNEXION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Un compte MixMatchFrip a été créé pour vous.
+Vous pouvez vous connecter pour consulter vos commandes.
+
+  Adresse e-mail       : {{ account_email }}
+  Mot de passe         : {{ account_password }}
+
+Pour des raisons de sécurité, nous vous recommandons
+de modifier ce mot de passe après votre première connexion.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{% endif %}
+
 Merci pour votre achat chez MixMatchFrip !
 L'équipe MixMatchFrip

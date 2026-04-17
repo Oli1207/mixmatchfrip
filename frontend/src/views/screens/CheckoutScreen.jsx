@@ -51,7 +51,7 @@ function Field({ label, id, error, children }) {
 
 // ─── Step 1 : Livraison ───────────────────────────────────────────────────────
 
-function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError, selectedRate, onSelectRate }) {
+function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError, selectedRate, onSelectRate, isGuest, createAccount, onToggleCreateAccount }) {
   return (
     <div className="checkout-step">
       <h2 className="checkout-step__title">Adresse de livraison</h2>
@@ -148,6 +148,26 @@ function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError,
           name="instructions" value={form.instructions} onChange={onChange}
           placeholder="Ex: code d'accès, appartement…" rows={3}/>
       </Field>
+
+      {isGuest && (
+        <div className="checkout-create-account">
+          <label className="checkout-create-account__label">
+            <input
+              type="checkbox"
+              className="checkout-create-account__checkbox"
+              checked={createAccount}
+              onChange={e => onToggleCreateAccount(e.target.checked)}
+            />
+            <span>Créer un compte pour suivre mes commandes</span>
+          </label>
+          {createAccount && (
+            <p className="checkout-create-account__hint">
+              Un compte sera créé avec l'adresse e-mail renseignée ci-dessus.
+              Vos identifiants de connexion vous seront communiqués par courriel.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -220,7 +240,7 @@ function PaymentStep({ form, shippingCost, cart, discount, promoCode, onPay, pay
 
 // ─── Step 3 : Confirmation ────────────────────────────────────────────────────
 
-function ConfirmationStep({ order }) {
+function ConfirmationStep({ order, canViewOrders }) {
   const navigate = useNavigate()
   return (
     <div className="checkout-confirm">
@@ -235,9 +255,11 @@ function ConfirmationStep({ order }) {
         <button className="btn-gold" onClick={() => navigate('/catalogue')}>
           Continuer les achats
         </button>
-        <button className="btn-dark-outline" onClick={() => navigate('/orders')}>
-          Voir mes commandes
-        </button>
+        {canViewOrders && (
+          <button className="btn-dark-outline" onClick={() => navigate('/orders')}>
+            Voir mes commandes
+          </button>
+        )}
       </div>
     </div>
   )
@@ -375,10 +397,11 @@ export default function CheckoutScreen() {
   const { isLoggedIn, allUserData } = useAuthStore()
   const { cart, fetchCart, clearCart } = useCartStore()
 
-  const [step,         setStep]        = useState(0)
-  const [errors,       setErrors]      = useState({})
-  const [apiError,     setApiError]    = useState(null)
-  const [order,        setOrder]       = useState(null)
+  const [step,           setStep]          = useState(0)
+  const [errors,         setErrors]        = useState({})
+  const [apiError,       setApiError]      = useState(null)
+  const [order,          setOrder]         = useState(null)
+  const [createAccount,  setCreateAccount] = useState(false)
 
   // Shipping rates state
   const [rates,        setRates]       = useState([])
@@ -410,7 +433,6 @@ export default function CheckoutScreen() {
   })
 
   useEffect(() => {
-    if (!isLoggedIn()) { navigate('/login'); return }
     fetchCart()
   }, [])
 
@@ -502,6 +524,7 @@ export default function CheckoutScreen() {
         shipping_cost:   shippingCost,
         promo_code:      promoCode || undefined,
         discount:        discount || 0,
+        create_account:  !isLoggedIn() ? createAccount : false,
       })
       createdOrder = data
     } catch (err) {
@@ -564,6 +587,9 @@ export default function CheckoutScreen() {
                 ratesError={ratesError}
                 selectedRate={selectedRate}
                 onSelectRate={setSelectedRate}
+                isGuest={!isLoggedIn()}
+                createAccount={createAccount}
+                onToggleCreateAccount={setCreateAccount}
               />
             )}
 
@@ -580,7 +606,7 @@ export default function CheckoutScreen() {
               />
             )}
 
-            {step === 2 && <ConfirmationStep order={order}/>}
+            {step === 2 && <ConfirmationStep order={order} canViewOrders={isLoggedIn() || (order?.account_created)}/>}
 
             {apiError && step < 2 && (
               <div className="checkout-api-error">{apiError}</div>

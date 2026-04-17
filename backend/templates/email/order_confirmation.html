@@ -97,6 +97,41 @@
             <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
               Vous recevrez un autre courriel dès que votre colis sera expédié avec les informations de suivi.
             </p>
+
+            {% if account_created %}
+            <!-- Identifiants de connexion -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border:1px solid #d4c9a8;border-radius:4px;overflow:hidden;">
+              <tr>
+                <td style="background:#f5f0e8;padding:12px 20px;border-bottom:1px solid #d4c9a8;">
+                  <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">🔐 Vos identifiants de connexion</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:20px;">
+                  <p style="margin:0 0 14px;font-size:13px;color:#555;line-height:1.7;">
+                    Un compte MixMatchFrip a été créé pour vous. Vous pouvez dès à présent vous connecter pour consulter vos commandes et gérer votre profil.
+                  </p>
+                  <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                      <td style="padding:8px 14px;background:#f5f0e8;border-radius:4px;font-size:13px;color:#0f0c0a;">
+                        <strong>Adresse e-mail :</strong>&nbsp;{{ account_email }}
+                      </td>
+                    </tr>
+                    <tr><td style="height:8px;"></td></tr>
+                    <tr>
+                      <td style="padding:8px 14px;background:#f5f0e8;border-radius:4px;font-size:13px;color:#0f0c0a;">
+                        <strong>Mot de passe temporaire :</strong>&nbsp;{{ account_password }}
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:14px 0 0;font-size:11px;color:#999;line-height:1.6;">
+                    Pour des raisons de sécurité, nous vous recommandons de modifier ce mot de passe après votre première connexion.
+                  </p>
+                </td>
+              </tr>
+            </table>
+            {% endif %}
+
           </td>
         </tr>
 

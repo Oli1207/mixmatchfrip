@@ -307,6 +307,7 @@ class Order(models.Model):
     payment_ref     = models.CharField(max_length=200, blank=True)
     is_paid         = models.BooleanField(default=False)
     paid_at         = models.DateTimeField(null=True, blank=True)
+    account_created = models.BooleanField(default=False)
 
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateTimeField(auto_now=True)
