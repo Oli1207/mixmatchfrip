@@ -1192,6 +1192,96 @@ def promo_apply(request):
     })
 
 
+# ─── Admin Newsletter ─────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_newsletter_list(request):
+    from .models import NewsletterSubscriber
+    subs = NewsletterSubscriber.objects.all().order_by('-created_at')
+    data = [
+        {'id': s.id, 'email': s.email, 'created_at': s.created_at}
+        for s in subs
+    ]
+    return Response({'count': len(data), 'results': data})
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def admin_newsletter_detail(request, pk):
+    from .models import NewsletterSubscriber
+    try:
+        sub = NewsletterSubscriber.objects.get(pk=pk)
+    except NewsletterSubscriber.DoesNotExist:
+        return Response({'detail': 'Introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    sub.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Admin Clients (cart + wishlist) ──────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_clients_list(request):
+    from django.contrib.auth import get_user_model
+    UserModel = get_user_model()
+
+    users = UserModel.objects.filter(
+        is_staff=False, is_superuser=False
+    ).order_by('-date_joined')
+
+    result = []
+    for user in users:
+        # ── Panier ──
+        cart_items = []
+        cart_total = 0.0
+        try:
+            cart = user.cart
+            for item in cart.items.select_related('product').all():
+                img = item.product.main_image
+                cart_items.append({
+                    'product_id':   item.product.id,
+                    'product_name': item.product.name,
+                    'brand':        item.product.brand,
+                    'price':        float(item.product.price),
+                    'qty':          item.qty,
+                    'line_total':   item.line_total,
+                    'image':        request.build_absolute_uri(img.image.url) if img else None,
+                    'slug':         item.product.slug,
+                })
+            cart_total = float(cart.subtotal)
+        except Exception:
+            pass
+
+        # ── Wishlist ──
+        wishlist_items = []
+        for w in user.wishlist.select_related('product').all():
+            img = w.product.main_image
+            wishlist_items.append({
+                'product_id':   w.product.id,
+                'product_name': w.product.name,
+                'brand':        w.product.brand,
+                'price':        float(w.product.price),
+                'image':        request.build_absolute_uri(img.image.url) if img else None,
+                'slug':         w.product.slug,
+            })
+
+        result.append({
+            'id':           user.id,
+            'email':        user.email,
+            'full_name':    user.full_name or user.username or '',
+            'phone':        user.phone or '',
+            'date_joined':  user.date_joined,
+            'last_login':   user.last_login,
+            'orders_count': user.orders.count(),
+            'cart':         cart_items,
+            'cart_total':   cart_total,
+            'wishlist':     wishlist_items,
+        })
+
+    return Response({'count': len(result), 'results': result})
+
+
 # ─── Newsletter ───────────────────────────────────────────────────────────────
 
 @api_view(['POST'])

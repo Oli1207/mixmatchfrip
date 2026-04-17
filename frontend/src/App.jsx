@@ -27,12 +27,14 @@ import PaymentSuccessScreen from './views/screens/PaymentSuccessScreen'
 import PaymentFailedScreen  from './views/screens/PaymentFailedScreen'
 
 // Admin
-import AdminLayout      from './views/admin/AdminLayout'
-import DashboardHome    from './views/admin/DashboardHome'
-import ProductsAdmin    from './views/admin/ProductsAdmin'
-import CategoriesAdmin  from './views/admin/CategoriesAdmin'
-import OrdersAdmin      from './views/admin/OrdersAdmin'
-import PromoCodes       from './views/admin/PromoCodes'
+import AdminLayout       from './views/admin/AdminLayout'
+import DashboardHome     from './views/admin/DashboardHome'
+import ProductsAdmin     from './views/admin/ProductsAdmin'
+import CategoriesAdmin   from './views/admin/CategoriesAdmin'
+import OrdersAdmin       from './views/admin/OrdersAdmin'
+import PromoCodes        from './views/admin/PromoCodes'
+import ClientsAdmin      from './views/admin/ClientsAdmin'
+import NewsletterAdmin   from './views/admin/NewsletterAdmin'
 
 // Account
 import AccountScreen    from './views/screens/AccountScreen'
@@ -103,6 +105,8 @@ function App() {
           <Route path="categories"    element={<CategoriesAdmin />} />
           <Route path="orders"        element={<OrdersAdmin />} />
           <Route path="promos"        element={<PromoCodes />} />
+          <Route path="clients"       element={<ClientsAdmin />} />
+          <Route path="newsletter"    element={<NewsletterAdmin />} />
         </Route>
 
       </Routes>

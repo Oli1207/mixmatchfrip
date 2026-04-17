@@ -214,3 +214,144 @@
 }
 .acc-btn:hover:not(:disabled) { background: var(--gold, #c49e5a); }
 .acc-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Card full-width ── */
+.acc-card--full { grid-column: 1 / -1; }
+
+/* ── Wishlist count badge ── */
+.acc-wishlist-count {
+  margin-left: 8px;
+  background: var(--gold, #c49e5a);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+/* ── Empty state ── */
+.acc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--gray-text, #888);
+  text-align: center;
+}
+.acc-empty p { margin: 0; font-size: 14px; }
+
+/* ── Wishlist grid ── */
+.acc-wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.acc-wish-card {
+  position: relative;
+  background: #f8f8f6;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ebebeb;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.acc-wish-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+.acc-wish-card__remove {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  background: rgba(0,0,0,0.55);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 0;
+  transition: background 0.15s;
+}
+.acc-wish-card__remove:hover { background: #e74c3c; }
+.acc-wish-card__remove:disabled { opacity: 0.5; cursor: wait; }
+
+.acc-wish-card__img-wrap {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3/4;
+  background: #fff;
+  overflow: hidden;
+}
+.acc-wish-card__img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+.acc-wish-card:hover .acc-wish-card__img-wrap img { transform: scale(1.04); }
+.acc-wish-card__no-img {
+  width: 100%;
+  height: 100%;
+  background: #f0f0f0;
+}
+
+.acc-wish-card__info {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.acc-wish-card__brand {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold, #c49e5a);
+}
+.acc-wish-card__name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--black, #111);
+  text-decoration: none;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.acc-wish-card__name:hover { color: var(--gold, #c49e5a); }
+.acc-wish-card__price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--black, #111);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.acc-wish-card__original {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gray-text, #888);
+  text-decoration: line-through;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .acc-wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}

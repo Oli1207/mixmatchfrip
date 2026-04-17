@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
-import { userAPI } from '../../utils/api'
-import { FiUser, FiMail, FiPhone, FiLock, FiCheck, FiAlertCircle, FiShoppingBag, FiEdit2 } from 'react-icons/fi'
+import { userAPI, wishlistAPI } from '../../utils/api'
+import { FiUser, FiMail, FiPhone, FiLock, FiCheck, FiAlertCircle, FiShoppingBag, FiEdit2, FiHeart, FiX, FiShoppingCart } from 'react-icons/fi'
 import './AccountScreen.css'
 
 export default function AccountScreen() {
@@ -12,6 +12,11 @@ export default function AccountScreen() {
 
   const [profile,    setProfile]    = useState(null)
   const [loading,    setLoading]    = useState(true)
+
+  // Wishlist
+  const [wishlist,      setWishlist]      = useState([])
+  const [wishlistLoad,  setWishlistLoad]  = useState(true)
+  const [removingId,    setRemovingId]    = useState(null)
 
   // Formulaire profil
   const [profileForm,  setProfileForm]  = useState({ full_name: '', phone: '' })
@@ -32,7 +37,22 @@ export default function AccountScreen() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
+
+    wishlistAPI.list()
+      .then(({ data }) => setWishlist(data))
+      .catch(() => {})
+      .finally(() => setWishlistLoad(false))
   }, [])
+
+  const handleRemoveWishlist = async (productId) => {
+    setRemovingId(productId)
+    try {
+      await wishlistAPI.toggle(productId)
+      setWishlist(w => w.filter(item => item.product.id !== productId))
+    } finally {
+      setRemovingId(null)
+    }
+  }
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target
@@ -111,6 +131,10 @@ export default function AccountScreen() {
           <Link to="/orders" className="acc-quicklink">
             <FiShoppingBag size={20}/>
             <span>Mes commandes</span>
+          </Link>
+          <Link to="/cart" className="acc-quicklink">
+            <FiShoppingCart size={20}/>
+            <span>Mon panier</span>
           </Link>
         </div>
 
@@ -204,6 +228,69 @@ export default function AccountScreen() {
             </form>
           </section>
         </div>
+
+        {/* ── Section Wishlist ── */}
+        <section className="acc-card acc-card--full" style={{ marginTop: 24 }}>
+          <div className="acc-card__head">
+            <FiHeart size={16}/>
+            <h2>Mes favoris</h2>
+            {wishlist.length > 0 && (
+              <span className="acc-wishlist-count">{wishlist.length}</span>
+            )}
+          </div>
+
+          {wishlistLoad ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '28px 0' }}>
+              <div className="acc-spinner"/>
+            </div>
+          ) : wishlist.length === 0 ? (
+            <div className="acc-empty">
+              <FiHeart size={32} style={{ opacity: 0.25, marginBottom: 12 }}/>
+              <p>Vous n'avez pas encore de favoris.</p>
+              <Link to="/catalogue" className="acc-btn" style={{ display: 'inline-flex', marginTop: 8 }}>
+                Parcourir la boutique
+              </Link>
+            </div>
+          ) : (
+            <div className="acc-wishlist-grid">
+              {wishlist.map(({ product }) => (
+                  <div key={product.id} className="acc-wish-card">
+                    <button
+                      className="acc-wish-card__remove"
+                      onClick={() => handleRemoveWishlist(product.id)}
+                      disabled={removingId === product.id}
+                      title="Retirer des favoris"
+                    >
+                      <FiX size={12}/>
+                    </button>
+                    <Link to={`/product/${product.slug}`} className="acc-wish-card__img-wrap">
+                      {product.main_image_url ? (
+                        <img src={product.main_image_url} alt={product.name}/>
+                      ) : (
+                        <div className="acc-wish-card__no-img"/>
+                      )}
+                    </Link>
+                    <div className="acc-wish-card__info">
+                      {product.brand && (
+                        <span className="acc-wish-card__brand">{product.brand}</span>
+                      )}
+                      <Link to={`/product/${product.slug}`} className="acc-wish-card__name">
+                        {product.name}
+                      </Link>
+                      <div className="acc-wish-card__price">
+                        {parseFloat(product.price).toFixed(2)} $
+                        {product.original_price && parseFloat(product.original_price) > parseFloat(product.price) && (
+                          <span className="acc-wish-card__original">
+                            {parseFloat(product.original_price).toFixed(2)} $
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+              ))}
+            </div>
+          )}
+        </section>
 
       </div>
     </div>

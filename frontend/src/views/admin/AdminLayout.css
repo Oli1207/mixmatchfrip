@@ -272,6 +272,25 @@
 .adm-btn--danger  { background: #e74c3c; color: #fff; }
 .adm-btn--outline { background: #fff; color: var(--black); border: 1px solid #e0e0e0; }
 
+/* ── Bouton icône (action de ligne de tableau) ── */
+.adm-btn-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-text);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  padding: 0;
+}
+.adm-btn-icon:hover { background: #f5f5f5; color: var(--black); }
+.adm-btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+.adm-btn-icon--danger:hover { background: #fff0f0; border-color: #e74c3c; color: #e74c3c; }
+
 /* ── Form grid ── */
 .adm-form-grid {
   display: grid;

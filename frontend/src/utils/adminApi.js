@@ -39,4 +39,13 @@ export const adminAPI = {
     update: (id, data)   => apiInstance.patch(`admin/promos/${id}/`, data),
     delete: (id)         => apiInstance.delete(`admin/promos/${id}/`),
   },
+
+  newsletter: {
+    list:   ()    => apiInstance.get('admin/newsletter/'),
+    delete: (id)  => apiInstance.delete(`admin/newsletter/${id}/`),
+  },
+
+  clients: {
+    list: () => apiInstance.get('admin/clients/'),
+  },
 }

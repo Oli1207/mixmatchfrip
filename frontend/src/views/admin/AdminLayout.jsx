@@ -1,15 +1,17 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { FiGrid, FiPackage, FiShoppingCart, FiTag, FiLogOut, FiExternalLink, FiLayers } from 'react-icons/fi'
+import { FiGrid, FiPackage, FiShoppingCart, FiTag, FiLogOut, FiExternalLink, FiLayers, FiUsers, FiMail } from 'react-icons/fi'
 import useAuthStore from '../../store/auth'
 import { logout } from '../../utils/auth'
 import './AdminLayout.css'
 
 const NAV = [
-  { to: '/dashboard',             label: 'Tableau de bord', icon: FiGrid },
-  { to: '/dashboard/products',    label: 'Produits',         icon: FiPackage },
-  { to: '/dashboard/categories',  label: 'Catégories',       icon: FiLayers },
-  { to: '/dashboard/orders',      label: 'Commandes',        icon: FiShoppingCart },
-  { to: '/dashboard/promos',      label: 'Codes promo',      icon: FiTag },
+  { to: '/dashboard',              label: 'Tableau de bord', icon: FiGrid },
+  { to: '/dashboard/products',     label: 'Produits',         icon: FiPackage },
+  { to: '/dashboard/categories',   label: 'Catégories',       icon: FiLayers },
+  { to: '/dashboard/orders',       label: 'Commandes',        icon: FiShoppingCart },
+  { to: '/dashboard/promos',       label: 'Codes promo',      icon: FiTag },
+  { to: '/dashboard/clients',      label: 'Clients',          icon: FiUsers },
+  { to: '/dashboard/newsletter',   label: 'Newsletter',       icon: FiMail },
 ]
 
 export default function AdminLayout() {

@@ -3,11 +3,15 @@ from django.utils.html import format_html
 from .models import (
     Category, Subcategory, Product, ProductImage,
     Wishlist, Cart, CartItem,
-    Order, OrderItem,
+    Order, OrderItem, NewsletterSubscriber
 )
 
 
+
+admin.site.register(NewsletterSubscriber)
 # ─── Category & Subcategory ───────────────────────────────────────────────────
+
+
 
 class SubcategoryInline(admin.TabularInline):
     model  = Subcategory
@@ -214,3 +218,4 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ['order_number', 'payment_ref', 'paid_at', 'created_at', 'updated_at']
     inlines         = [OrderItemInline]
     list_editable   = ['status']
+

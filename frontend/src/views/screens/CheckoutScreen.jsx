@@ -524,6 +524,7 @@ export default function CheckoutScreen() {
         ...form,
         shipping_method: selectedRate.code,
         shipping_cost:   shippingCost,
+        cart_id: getLocalCartId(),
         promo_code:      promoCode || undefined,
         discount:        discount || 0,
         create_account:  !isLoggedIn() ? createAccount : false,

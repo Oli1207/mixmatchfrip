@@ -49,7 +49,12 @@ urlpatterns = [
     path('webhooks/paystack/', views.paystack_webhook, name='paystack-webhook'),
 
     # ── Newsletter ────────────────────────────────────────────────────────────
-    path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter-subscribe'),
+    path('newsletter/subscribe/',    views.newsletter_subscribe,    name='newsletter-subscribe'),
+
+    # ── Admin Clients & Newsletter ────────────────────────────────────────────
+    path('admin/newsletter/',        views.admin_newsletter_list,   name='admin-newsletter'),
+    path('admin/newsletter/<int:pk>/', views.admin_newsletter_detail, name='admin-newsletter-detail'),
+    path('admin/clients/',           views.admin_clients_list,      name='admin-clients'),
 
     # ── Promo ─────────────────────────────────────────────────────────────────
     path('promo/apply/', views.promo_apply, name='promo-apply'),
