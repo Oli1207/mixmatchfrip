@@ -20,7 +20,7 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 
 # BASE_URL = "http://192.168.1.10:5173/"
-BASE_URL = "https://www.backend.mixmatchfrip.com/"
+BASE_URL = "https://www.mixmatchfrip.com/"
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
@@ -181,7 +181,7 @@ class PasswordResetConfirmAPIView(generics.GenericAPIView):
             # Vérifie que le token est valide
             AccessToken(reset_token)
 
-            if not user.reset_token_created_at or timezone.now() > user.reset_token_created_at + timedelta(minutes=2):
+            if not user.reset_token_created_at or timezone.now() > user.reset_token_created_at + timedelta(minutes=30):
                 return Response({"error": "Lien expiré. Veuillez refaire la demande."}, status=status.HTTP_400_BAD_REQUEST)
 
             user.set_password(new_password)

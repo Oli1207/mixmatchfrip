@@ -30,10 +30,10 @@
 .pdp-gallery__thumbs { display: flex; flex-direction: column; gap: 8px; }
 .pdp-thumb { width: 72px; height: 86px; border: 2px solid transparent; border-radius: 4px; overflow: hidden; cursor: pointer; transition: border-color var(--transition); padding: 0; background: none; }
 .pdp-thumb.active { border-color: var(--green); }
-.pdp-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pdp-thumb img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
 
 .pdp-gallery__main { flex: 1; position: relative; border-radius: 4px; overflow: hidden; }
-.pdp-gallery__img { width: 100%; aspect-ratio: 3/4; object-fit: cover; object-position: center top; display: block; }
+.pdp-gallery__img { width: 100%; aspect-ratio: 3/4; object-fit: contain; object-position: center center; background: #fff; display: block; }
 .pdp-gallery__badge { position: absolute; top: 12px; right: 12px; background: var(--green); color: var(--white); font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 20px; }
 .pdp-wishlist { position: absolute; top: 12px; left: 12px; background: var(--white); border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--black); transition: color var(--transition), transform var(--transition); }
 .pdp-wishlist.active { color: #e74c3c; }
@@ -149,7 +149,7 @@
 .pdp-rel-card { text-decoration: none; color: var(--black); display: block; transition: transform var(--transition); }
 .pdp-rel-card:hover { transform: translateY(-3px); color: var(--black); }
 .pdp-rel-card__img-wrap { position: relative; padding-top: 130%; overflow: hidden; border-radius: 6px; }
-.pdp-rel-card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; transition: transform 0.45s ease; }
+.pdp-rel-card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center center; background: #fff; transition: transform 0.45s ease; }
 .pdp-rel-card:hover .pdp-rel-card__img { transform: scale(1.04); }
 .pdp-rel-card__badge { position: absolute; top: 8px; right: 8px; background: var(--green); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
 .pdp-rel-card__info { padding: 10px 2px 0; }
