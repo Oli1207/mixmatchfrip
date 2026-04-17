@@ -94,9 +94,24 @@
               </p>
             </div>
 
-            <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
+            {% if tracking_url %}
+            <div style="margin:0 0 24px;text-align:center;">
+              <p style="margin:0 0 14px;font-size:13px;color:#555;line-height:1.7;">
+                Votre colis a été pris en charge par notre partenaire d'expédition. Suivez-le en temps réel :
+              </p>
+              <a href="{{ tracking_url }}"
+                 style="display:inline-block;background:#0f0c0a;color:#c9a84c;font-family:'Georgia',serif;font-size:13px;font-weight:700;letter-spacing:1px;text-decoration:none;padding:13px 28px;border-radius:3px;">
+                Suivre mon colis &rarr;
+              </a>
+              <p style="margin:10px 0 0;font-size:11px;color:#aaa;">
+                ou copiez ce lien : {{ tracking_url }}
+              </p>
+            </div>
+            {% else %}
+            <p style="margin:0 0 24px;font-size:13px;color:#555;line-height:1.7;">
               Vous recevrez un autre courriel dès que votre colis sera expédié avec les informations de suivi.
             </p>
+            {% endif %}
 
             {% if account_created %}
             <!-- Identifiants de connexion -->

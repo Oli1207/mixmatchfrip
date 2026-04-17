@@ -5,7 +5,7 @@
 .hs-card-skeleton {
   height: 380px;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--cream) 25%, var(--cream-dark) 50%, var(--cream) 75%);
+  background: linear-gradient(90deg, var(--cream) 25%, #ece7db 50%, var(--cream) 75%);
   background-size: 200% 100%;
   animation: hs-shimmer 1.4s infinite;
 }
@@ -268,13 +268,18 @@
 }
 
 .hs-card {
-  background: var(--white);
-  border-radius: 6px;
+  background: var(--cream);
+  border-radius: 3px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition);
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  transition: box-shadow var(--transition), transform var(--transition);
 }
-.hs-card--hovered { box-shadow: var(--shadow-md); }
+.hs-card--hovered {
+  box-shadow: 0 8px 28px rgba(26,26,26,0.09);
+  transform: translateY(-3px);
+}
 
 .hs-card__img-wrap {
   position: relative;
@@ -289,7 +294,7 @@
   height: 100%;
   object-fit: contain;
   object-position: center center;
-  background: #fff;
+  background: #ffffff;
   transition: transform 0.55s ease;
 }
 .hs-card--hovered .hs-card__img { transform: scale(1.05); }
@@ -335,7 +340,7 @@
 }
 .hs-card__cta:hover { background: var(--green); color: var(--white); }
 
-.hs-card__info { padding: 14px 12px 18px; }
+.hs-card__info { padding: 14px 14px 18px; flex: 1; display: flex; flex-direction: column; }
 
 .hs-card__brand {
   font-size: 10px;
@@ -371,7 +376,7 @@
   font-size: 11px;
   padding: 3px 9px;
   border-radius: 20px;
-  background: var(--cream);
+  background: var(--cream-dark);
   color: var(--gray-text);
   font-weight: 500;
 }
@@ -380,6 +385,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
 }
 
 .hs-card__price {

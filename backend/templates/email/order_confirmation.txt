@@ -21,7 +21,12 @@ Adresse de livraison :
 {{ order.address }}
 {{ order.city }}, {{ order.province }}  {{ order.postal_code }}
 
+{% if tracking_url %}
+Votre colis est en route ! Suivez-le ici :
+{{ tracking_url }}
+{% else %}
 Vous recevrez un autre courriel dès que votre colis sera expédié.
+{% endif %}
 
 {% if account_created %}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

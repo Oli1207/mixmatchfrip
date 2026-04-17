@@ -525,6 +525,16 @@ def payment_success_view(request, order_number):
             order.status      = 'confirmed'
             order.save(update_fields=['is_paid', 'payment_ref', 'paid_at', 'status'])
 
+            # Créer l'envoi Chit Chats et sauvegarder l'ID de suivi
+            if not order.shipment_id:
+                try:
+                    shipment_id = _create_chitchats_shipment(order)
+                    if shipment_id:
+                        order.shipment_id = shipment_id
+                        order.save(update_fields=['shipment_id'])
+                except Exception:
+                    pass  # Ne pas bloquer la confirmation si Chit Chats échoue
+
             # Envoyer l'email de confirmation
             _send_order_confirmation_email(order)
 
@@ -536,13 +546,93 @@ def payment_success_view(request, order_number):
             return Response({'detail': 'Paiement annulé.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+def _create_chitchats_shipment(order):
+    """
+    Crée un envoi Chit Chats réel (non temporaire) pour une commande payée.
+    Retourne le shipment_id (str) ou None en cas d'erreur / retrait en magasin.
+    """
+    import logging
+    log = logging.getLogger(__name__)
+
+    token     = getattr(settings, 'CHITCHATS_ACCESS_TOKEN', None)
+    client_id = getattr(settings, 'CHITCHATS_CLIENT_ID', None)
+    if not token or not client_id:
+        return None
+    if order.shipping_method == 'pickup':
+        return None
+
+    # Mapping nom de province → code ISO
+    _PROV = {
+        'Alberta': 'AB', 'Colombie-Britannique': 'BC', 'Manitoba': 'MB',
+        'Nouveau-Brunswick': 'NB', 'Nouvelle-Écosse': 'NS', 'Ontario': 'ON',
+        'Québec': 'QC', 'Saskatchewan': 'SK', 'Terre-Neuve-et-Labrador': 'NL',
+        'Île-du-Prince-Édouard': 'PE', 'Territoires du Nord-Ouest': 'NT',
+        'Nunavut': 'NU', 'Yukon': 'YT',
+    }
+    province_code = _PROV.get(order.province, order.province[:2].upper() if order.province else 'QC')
+
+    # Poids total depuis les articles de la commande
+    weight_g = sum(
+        (item.product.weight_g if item.product else 400) * item.qty
+        for item in order.items.select_related('product').all()
+    ) or 400
+    size_x, size_y, size_z = _estimate_package_dimensions(weight_g)
+
+    base_url = f'https://chitchats.com/api/v1/clients/{client_id}/shipments'
+    headers  = {'Authorization': token, 'Content-Type': 'application/json'}
+
+    payload = {
+        'name':                f'{order.first_name} {order.last_name}',
+        'address_1':           order.address,
+        'city':                order.city,
+        'province_code':       province_code,
+        'postal_code':         order.postal_code,
+        'country_code':        'CA',
+        'phone':               order.phone or '',
+        'description':         'Vêtements seconde main — MixMatchFrip',
+        'value':               str(round(float(order.subtotal), 2)),
+        'value_currency':      'cad',
+        'package_type':        'parcel',
+        'size_unit':           'cm',
+        'size_x':              size_x,
+        'size_y':              size_y,
+        'size_z':              size_z,
+        'weight_unit':         'g',
+        'weight':              max(weight_g, 50),
+        'postage_type':        order.shipping_method,
+        'ship_date':           'today',
+        'order_id':            order.order_number,
+        'insurance_requested': True,
+        'signature_requested': False,
+    }
+
+    try:
+        resp = http_requests.post(base_url, json=payload, headers=headers, timeout=15)
+        if not resp.ok:
+            log.error('ChitChats shipment creation HTTP %s: %s', resp.status_code, resp.text[:500])
+            return None
+        body        = resp.json()
+        data        = body.get('shipment', body) if isinstance(body, dict) else {}
+        shipment_id = data.get('id')
+        log.info('ChitChats shipment created: id=%s order=%s', shipment_id, order.order_number)
+        return str(shipment_id) if shipment_id else None
+    except Exception as exc:
+        log.error('ChitChats shipment exception: %s', exc)
+        return None
+
+
 def _send_order_confirmation_email(order):
     """Envoie l'email de confirmation de commande au client."""
     try:
-        order_items = order.items.select_related('product').all()
+        order_items  = order.items.select_related('product').all()
+        tracking_url = (
+            f'https://chitchats.com/tracking/{order.shipment_id}/'
+            if order.shipment_id else None
+        )
         context = {
             'order':            order,
             'order_items':      order_items,
+            'tracking_url':     tracking_url,
             'account_created':  order.account_created,
             'account_email':    order.email if order.account_created else None,
             'account_password': '12345678'  if order.account_created else None,

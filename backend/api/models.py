@@ -323,6 +323,7 @@ class Order(models.Model):
     total           = models.DecimalField(max_digits=10, decimal_places=2)
 
     payment_ref     = models.CharField(max_length=200, blank=True)
+    shipment_id     = models.CharField(max_length=100, blank=True, verbose_name='Chit Chats Shipment ID')
     is_paid         = models.BooleanField(default=False)
     paid_at         = models.DateTimeField(null=True, blank=True)
     account_created = models.BooleanField(default=False)
