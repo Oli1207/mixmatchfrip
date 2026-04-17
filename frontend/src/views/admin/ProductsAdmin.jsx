@@ -199,6 +199,7 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
 
   const [form, setForm]               = useState(buildInitial(product))
   const [saving, setSaving]           = useState(false)
+  const [savingStep, setSavingStep]   = useState('')   // label affiché pendant la sauvegarde
   const [error, setError]             = useState(null)
   const [existingImages, setExisting] = useState(product?.images || [])
   const [toDelete, setToDelete]       = useState([])
@@ -233,7 +234,7 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setSaving(true); setError(null)
+    setSaving(true); setError(null); setSavingStep('Enregistrement du produit…')
 
     // ── Étape 1 : sauvegarder les données du produit ────────────────────────────
     let saved
@@ -250,7 +251,6 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
       let msg = 'Erreur lors de la sauvegarde.'
       if (d) {
         if (typeof d === 'string') {
-          // Django renvoie une page HTML 500 (migration non appliquée, erreur serveur…)
           const code = err.response?.status || 500
           msg = `Erreur serveur ${code}. Vérifiez que les migrations sont appliquées sur le serveur (python manage.py migrate).`
         } else if (d.detail) {
@@ -260,40 +260,51 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
           msg = vals.length ? vals.join(' ') : msg
         }
       }
-      setError(msg)
-      setSaving(false)
+      setError(msg); setSaving(false); setSavingStep('')
       return
     }
 
     // ── Étape 2 : supprimer les images marquées ─────────────────────────────────
-    await Promise.all(
-      toDelete.map(id => adminAPI.products.deleteImage(saved.id, id).catch(() => {}))
-    )
-
-    // ── Étape 3 : uploader les nouvelles images ─────────────────────────────────
-    const effectiveMainIdx = newMainIdx !== null ? newMainIdx : 0
-    let uploadFailed = 0
-    for (let i = 0; i < newFiles.length; i++) {
-      const fd = new FormData()
-      fd.append('image', newFiles[i])
-      if (existingImages.length === 0 && i === effectiveMainIdx) fd.append('is_main', 'true')
-      try {
-        await adminAPI.products.uploadImage(saved.id, fd)
-      } catch {
-        uploadFailed++
-      }
+    if (toDelete.length > 0) {
+      setSavingStep('Suppression des photos…')
+      await Promise.all(
+        toDelete.map(id => adminAPI.products.deleteImage(saved.id, id).catch(() => {}))
+      )
     }
 
-    setSaving(false)
+    // ── Étape 3 : upload PARALLÈLE des nouvelles images ─────────────────────────
+    if (newFiles.length > 0) {
+      setSavingStep(`Téléversement des photos (0 / ${newFiles.length})…`)
+      const effectiveMainIdx = newMainIdx !== null ? newMainIdx : 0
+      let done = 0
 
-    if (uploadFailed > 0) {
-      // Produit sauvegardé mais certaines photos ont échoué
-      setError(
-        `Produit sauvegardé ✓ — ${uploadFailed} photo(s) non téléversée(s). ` +
-        `Ouvrez à nouveau ce produit pour les ajouter depuis l'onglet Photos.`
+      const results = await Promise.allSettled(
+        newFiles.map((file, i) => {
+          const fd = new FormData()
+          fd.append('image', file)
+          if (existingImages.length === 0 && i === effectiveMainIdx) fd.append('is_main', 'true')
+          return adminAPI.products.uploadImage(saved.id, fd).then(res => {
+            done++
+            setSavingStep(`Téléversement des photos (${done} / ${newFiles.length})…`)
+            return res
+          })
+        })
       )
-      setTimeout(onSaved, 3000) // ferme après 3 s pour laisser le temps de lire
+
+      const uploadFailed = results.filter(r => r.status === 'rejected').length
+      setSaving(false); setSavingStep('')
+
+      if (uploadFailed > 0) {
+        setError(
+          `Produit sauvegardé ✓ — ${uploadFailed} photo(s) non téléversée(s). ` +
+          `Ouvrez à nouveau ce produit pour les ajouter depuis l'onglet Photos.`
+        )
+        setTimeout(onSaved, 3000)
+      } else {
+        onSaved()
+      }
     } else {
+      setSaving(false); setSavingStep('')
       onSaved()
     }
   }
@@ -317,7 +328,18 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
           ))}
         </div>
 
-        <form className="adm-modal__body" onSubmit={handleSubmit}>
+        <form className="adm-modal__body" onSubmit={handleSubmit} style={{ position: 'relative' }}>
+
+          {/* Overlay semi-transparent pendant la sauvegarde */}
+          {saving && (
+            <div className="adm-modal__saving-overlay">
+              <div className="adm-modal__saving-box">
+                <span className="adm-spinner adm-spinner--lg"/>
+                <span className="adm-modal__saving-label">{savingStep}</span>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className={`adm-modal__error${error.startsWith('Produit sauvegardé') ? ' adm-modal__error--warn' : ''}`}>
               <FiAlertCircle size={14}/> {error}
@@ -526,9 +548,14 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
           )}
 
           <div className="adm-modal__foot">
-            <button type="button" className="adm-btn adm-btn--outline" onClick={onClose}>Annuler</button>
+            <button type="button" className="adm-btn adm-btn--outline" onClick={onClose} disabled={saving}>
+              Annuler
+            </button>
             <button type="submit" className="adm-btn adm-btn--gold" disabled={saving}>
-              {saving ? 'Enregistrement…' : product ? 'Sauvegarder' : 'Créer le produit'}
+              {saving
+                ? <><span className="adm-spinner"/> {savingStep || 'Enregistrement…'}</>
+                : product ? 'Sauvegarder' : 'Créer le produit'
+              }
             </button>
           </div>
         </form>

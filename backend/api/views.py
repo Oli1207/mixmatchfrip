@@ -1190,3 +1190,26 @@ def promo_apply(request):
         'discount_value':  float(promo.discount_value),
         'discount_amount': round(discount_amount, 2),
     })
+
+
+# ─── Newsletter ───────────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def newsletter_subscribe(request):
+    """
+    Enregistre un email pour la newsletter.
+    Body: { email: str }
+    """
+    from .models import NewsletterSubscriber
+    import re
+
+    email = (request.data.get('email') or '').strip().lower()
+    if not email or not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+        return Response({'detail': 'Adresse e-mail invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    _, created = NewsletterSubscriber.objects.get_or_create(email=email)
+    if created:
+        return Response({'detail': 'Inscription confirmée !'}, status=status.HTTP_201_CREATED)
+    # Already subscribed — treat as success so no info leakage
+    return Response({'detail': 'Vous êtes déjà inscrit(e).'}, status=status.HTTP_200_OK)

@@ -48,6 +48,9 @@ urlpatterns = [
     # ── Webhooks ──────────────────────────────────────────────────────────────
     path('webhooks/paystack/', views.paystack_webhook, name='paystack-webhook'),
 
+    # ── Newsletter ────────────────────────────────────────────────────────────
+    path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter-subscribe'),
+
     # ── Promo ─────────────────────────────────────────────────────────────────
     path('promo/apply/', views.promo_apply, name='promo-apply'),
 

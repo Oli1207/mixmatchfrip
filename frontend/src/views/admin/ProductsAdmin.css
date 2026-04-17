@@ -211,6 +211,54 @@
   flex-shrink: 0;
 }
 
+/* ── Spinner ─────────────────────────────────────────────────────────────────── */
+@keyframes adm-spin { to { transform: rotate(360deg); } }
+
+.adm-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: adm-spin 0.65s linear infinite;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.adm-spinner--lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+  border-color: rgba(196, 158, 90, 0.25);
+  border-top-color: var(--gold);
+}
+
+/* Overlay sauvegarde */
+.adm-modal__saving-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 8px 8px;
+}
+.adm-modal__saving-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.adm-modal__saving-label {
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--black);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
 /* ── Quick photo strip (inline dans l'onglet Essentiel) ── */
 .adm-quick-photos {
   display: flex;
