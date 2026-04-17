@@ -14,6 +14,15 @@ class SubcategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug']
 
 
+class SubcategoryAdminSerializer(serializers.ModelSerializer):
+    category_id   = serializers.IntegerField(source='category.id', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model  = Subcategory
+        fields = ['id', 'name', 'slug', 'category_id', 'category_name']
+
+
 class CategorySerializer(serializers.ModelSerializer):
     product_count  = serializers.IntegerField(source='products.count', read_only=True)
     subcategories  = SubcategorySerializer(many=True, read_only=True)
@@ -64,6 +73,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     subcategory      = SubcategorySerializer(read_only=True)
     images           = ProductImageSerializer(many=True, read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
+    main_image_url   = serializers.SerializerMethodField()
     related          = serializers.SerializerMethodField()
 
     class Meta:
@@ -87,10 +97,17 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'bullet_1', 'bullet_2', 'bullet_3', 'bullet_4',
             'description', 'mix_match_tips', 'expert_tip',
             # Medias
-            'images',
+            'images', 'main_image_url',
             # Meta
             'weight_g', 'created_at', 'related',
         ]
+
+    def get_main_image_url(self, obj):
+        request = self.context.get('request')
+        img = obj.main_image
+        if img and request:
+            return request.build_absolute_uri(img.image.url)
+        return None
 
     def get_related(self, obj):
         # Priorite: meme sous-categorie, sinon meme categorie

@@ -3,7 +3,16 @@ import apiInstance from './axios'
 // ─── Categories ──────────────────────────────────────────────────────────────
 
 export const categoriesAPI = {
-  list: () => apiInstance.get('categories/'),
+  list:             ()     => apiInstance.get('categories/'),
+  subcategoriesBySlug: (slug) => apiInstance.get(`categories/${slug}/subcategories/`),
+}
+
+// ─── User account ────────────────────────────────────────────────────────────
+
+export const userAPI = {
+  me:             ()       => apiInstance.get('user/me/'),
+  update:         (data)   => apiInstance.put('user/me/update/', data),
+  changePassword: (data)   => apiInstance.post('user/me/change-password/', data),
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────

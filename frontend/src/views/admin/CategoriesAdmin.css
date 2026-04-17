@@ -1,0 +1,132 @@
+/* ── Categories Admin ────────────────────────────────────────────────────────── */
+.cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cat-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.cat-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+.cat-item__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #fff;
+}
+
+.cat-item__toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-text);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.cat-item__toggle:hover { color: var(--black); }
+
+.cat-item__name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-item__count {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gray-text);
+  background: #f5f5f5;
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+
+.cat-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-action-btn {
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Subcategories */
+.cat-subs {
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+  padding: 8px 16px 8px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cat-subs__empty {
+  font-size: 12px;
+  color: var(--gray-text);
+  padding: 8px 0;
+}
+
+.cat-link {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  text-decoration: underline;
+}
+
+.cat-sub-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.cat-sub-item:hover { background: #f0f0f0; }
+
+.cat-sub-item__name {
+  font-size: 13px;
+  color: var(--black);
+}
+.cat-sub-item__name::before {
+  content: '— ';
+  color: var(--gray-text);
+  font-size: 11px;
+}
+
+.cat-sub-item__actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Empty state */
+.cat-empty {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--gray-text);
+}
+.cat-empty p {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Small modal */
+.adm-modal--sm { max-width: 420px; }

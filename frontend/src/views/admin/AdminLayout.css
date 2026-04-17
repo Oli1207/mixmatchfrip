@@ -320,3 +320,78 @@
   .adm-main { padding: 20px 16px; }
   .adm-stats { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Shared modal styles (used by Products, Categories, etc.) ── */
+.adm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+.adm-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.adm-modal--sm  { max-width: 420px; }
+.adm-modal--lg  { max-width: 780px; }
+
+.adm-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+.adm-modal__title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--black);
+  margin: 0;
+}
+.adm-modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-text);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.adm-modal__close:hover { color: var(--black); }
+.adm-modal__body  { padding: 24px; }
+.adm-modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+}
+.adm-modal__error {
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #e53e3e;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

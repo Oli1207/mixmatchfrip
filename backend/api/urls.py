@@ -61,4 +61,8 @@ urlpatterns = [
     path('admin/orders/<str:order_number>/status/', views.admin_order_update_status,  name='admin-order-status'),
     path('admin/promos/',                           views.admin_promo_list,           name='admin-promos'),
     path('admin/promos/<int:pk>/',                  views.admin_promo_detail,         name='admin-promo-detail'),
+    path('admin/categories/',                       views.admin_category_list,        name='admin-categories'),
+    path('admin/categories/<int:pk>/',              views.admin_category_detail,      name='admin-category-detail'),
+    path('admin/subcategories/',                    views.admin_subcategory_list,     name='admin-subcategories'),
+    path('admin/subcategories/<int:pk>/',           views.admin_subcategory_detail,   name='admin-subcategory-detail'),
 ]

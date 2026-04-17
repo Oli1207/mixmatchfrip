@@ -20,7 +20,7 @@ from .models import (
     Order, OrderItem, PromoCode,
 )
 from .serializers import (
-    CategorySerializer, SubcategorySerializer,
+    CategorySerializer, SubcategorySerializer, SubcategoryAdminSerializer,
     ProductListSerializer, ProductDetailSerializer, ProductImageSerializer,
     WishlistSerializer,
     CartSerializer, CartItemSerializer,
@@ -753,24 +753,53 @@ def admin_product_list(request):
 
     # POST — créer un produit
     data = request.data
-    category_id = data.get('category')
+    category_id    = data.get('category')
+    subcategory_id = data.get('subcategory')
     try:
         category = Category.objects.get(pk=category_id) if category_id else None
     except Category.DoesNotExist:
         return Response({'detail': 'Catégorie introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        subcategory = Subcategory.objects.get(pk=subcategory_id) if subcategory_id else None
+    except Subcategory.DoesNotExist:
+        subcategory = None
+
+    def _decimal_or_none(val):
+        try:
+            return float(val) if val not in ('', None) else None
+        except (ValueError, TypeError):
+            return None
 
     product = Product.objects.create(
-        category       = category,
-        name           = data.get('name', ''),
-        brand          = data.get('brand', ''),
-        description    = data.get('description', ''),
-        price          = data.get('price', 0),
-        original_price = data.get('original_price') or None,
-        size           = data.get('size', 'M'),
-        condition      = data.get('condition', 'good'),
-        color          = data.get('color', ''),
-        stock          = int(data.get('stock', 1)),
-        is_available   = data.get('is_available', True),
+        category            = category,
+        subcategory         = subcategory,
+        name                = data.get('name', ''),
+        brand               = data.get('brand', ''),
+        description         = data.get('description', ''),
+        price               = data.get('price', 0),
+        original_price      = _decimal_or_none(data.get('original_price')),
+        size                = data.get('size', 'M'),
+        size_tag            = data.get('size_tag', ''),
+        size_recommendation = data.get('size_recommendation', ''),
+        condition           = data.get('condition', 'good'),
+        color               = data.get('color', []),
+        stock               = int(data.get('stock', 1)),
+        weight_g            = int(data.get('weight_g', 400)),
+        is_available        = data.get('is_available', True),
+        material            = data.get('material', ''),
+        details             = data.get('details', ''),
+        bullet_1            = data.get('bullet_1', ''),
+        bullet_2            = data.get('bullet_2', ''),
+        bullet_3            = data.get('bullet_3', ''),
+        bullet_4            = data.get('bullet_4', ''),
+        mix_match_tips      = data.get('mix_match_tips', ''),
+        expert_tip          = data.get('expert_tip', ''),
+        measure_shoulder    = _decimal_or_none(data.get('measure_shoulder')),
+        measure_chest       = _decimal_or_none(data.get('measure_chest')),
+        measure_waist       = _decimal_or_none(data.get('measure_waist')),
+        measure_hips        = _decimal_or_none(data.get('measure_hips')),
+        measure_length      = _decimal_or_none(data.get('measure_length')),
+        measure_sleeve      = _decimal_or_none(data.get('measure_sleeve')),
     )
     return Response(ProductDetailSerializer(product, context={'request': request}).data,
                     status=status.HTTP_201_CREATED)
@@ -789,20 +818,51 @@ def admin_product_detail(request, pk):
 
     if request.method == 'PUT':
         data = request.data
+
         category_id = data.get('category')
         if category_id:
             try:
                 product.category = Category.objects.get(pk=category_id)
             except Category.DoesNotExist:
                 pass
+        elif 'category' in data:
+            product.category = None
 
-        for field in ['name', 'brand', 'description', 'price', 'original_price',
-                      'size', 'condition', 'color', 'stock', 'is_available']:
+        subcategory_id = data.get('subcategory')
+        if subcategory_id:
+            try:
+                product.subcategory = Subcategory.objects.get(pk=subcategory_id)
+            except Subcategory.DoesNotExist:
+                pass
+        elif 'subcategory' in data:
+            product.subcategory = None
+
+        def _decimal_or_none(val):
+            try:
+                return float(val) if val not in ('', None) else None
+            except (ValueError, TypeError):
+                return None
+
+        simple_fields = [
+            'name', 'brand', 'description', 'size', 'size_tag', 'size_recommendation',
+            'condition', 'color', 'stock', 'weight_g', 'is_available',
+            'material', 'details',
+            'bullet_1', 'bullet_2', 'bullet_3', 'bullet_4',
+            'mix_match_tips', 'expert_tip',
+        ]
+        for field in simple_fields:
             if field in data:
-                val = data[field]
-                if field == 'original_price' and val == '':
-                    val = None
-                setattr(product, field, val)
+                setattr(product, field, data[field])
+
+        decimal_fields = [
+            'price', 'original_price',
+            'measure_shoulder', 'measure_chest', 'measure_waist',
+            'measure_hips', 'measure_length', 'measure_sleeve',
+        ]
+        for field in decimal_fields:
+            if field in data:
+                setattr(product, field, _decimal_or_none(data[field]))
+
         product.save()
         return Response(ProductDetailSerializer(product, context={'request': request}).data)
 
@@ -919,6 +979,99 @@ def admin_promo_detail(request, pk):
 
     # DELETE
     promo.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Admin Categories ─────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
+def admin_category_list(request):
+    if request.method == 'GET':
+        categories = Category.objects.prefetch_related('subcategories').all()
+        return Response(CategorySerializer(categories, many=True, context={'request': request}).data)
+
+    # POST
+    name = request.data.get('name', '').strip()
+    if not name:
+        return Response({'detail': 'Nom requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    cat = Category(name=name)
+    if request.FILES.get('image'):
+        cat.image = request.FILES['image']
+    cat.save()
+    return Response(CategorySerializer(cat, context={'request': request}).data,
+                    status=status.HTTP_201_CREATED)
+
+
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAdminUser])
+def admin_category_detail(request, pk):
+    try:
+        cat = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        return Response({'detail': 'Catégorie introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        name = request.data.get('name', cat.name).strip()
+        if not name:
+            return Response({'detail': 'Nom requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        cat.name = name
+        if request.FILES.get('image'):
+            cat.image = request.FILES['image']
+        cat.save()
+        return Response(CategorySerializer(cat, context={'request': request}).data)
+
+    cat.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Admin Subcategories ───────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
+def admin_subcategory_list(request):
+    if request.method == 'GET':
+        subs = Subcategory.objects.select_related('category').all()
+        return Response(SubcategoryAdminSerializer(subs, many=True).data)
+
+    # POST
+    name       = request.data.get('name', '').strip()
+    cat_id     = request.data.get('category')
+    if not name:
+        return Response({'detail': 'Nom requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        cat = Category.objects.get(pk=cat_id)
+    except (Category.DoesNotExist, TypeError, ValueError):
+        return Response({'detail': 'Catégorie requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    sub = Subcategory(category=cat, name=name)
+    sub.save()
+    return Response(SubcategoryAdminSerializer(sub).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAdminUser])
+def admin_subcategory_detail(request, pk):
+    try:
+        sub = Subcategory.objects.select_related('category').get(pk=pk)
+    except Subcategory.DoesNotExist:
+        return Response({'detail': 'Sous-catégorie introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        name   = request.data.get('name', sub.name).strip()
+        cat_id = request.data.get('category')
+        if not name:
+            return Response({'detail': 'Nom requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        if cat_id:
+            try:
+                sub.category = Category.objects.get(pk=cat_id)
+            except Category.DoesNotExist:
+                return Response({'detail': 'Catégorie introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+        sub.name = name
+        sub.save()
+        return Response(SubcategoryAdminSerializer(sub).data)
+
+    sub.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 

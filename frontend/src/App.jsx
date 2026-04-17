@@ -27,11 +27,16 @@ import PaymentSuccessScreen from './views/screens/PaymentSuccessScreen'
 import PaymentFailedScreen  from './views/screens/PaymentFailedScreen'
 
 // Admin
-import AdminLayout   from './views/admin/AdminLayout'
-import DashboardHome from './views/admin/DashboardHome'
-import ProductsAdmin from './views/admin/ProductsAdmin'
-import OrdersAdmin   from './views/admin/OrdersAdmin'
-import PromoCodes    from './views/admin/PromoCodes'
+import AdminLayout      from './views/admin/AdminLayout'
+import DashboardHome    from './views/admin/DashboardHome'
+import ProductsAdmin    from './views/admin/ProductsAdmin'
+import CategoriesAdmin  from './views/admin/CategoriesAdmin'
+import OrdersAdmin      from './views/admin/OrdersAdmin'
+import PromoCodes       from './views/admin/PromoCodes'
+
+// Account
+import AccountScreen    from './views/screens/AccountScreen'
+import OrdersScreen     from './views/screens/OrdersScreen'
 
 // Wrapper boutique publique (Navbar + Footer autour des routes enfants)
 function PublicLayout() {
@@ -72,6 +77,10 @@ function App() {
           <Route path="/payment-success/:order_number" element={<PaymentSuccessScreen />} />
           <Route path="/payment-failed/:order_number"  element={<PaymentFailedScreen />} />
 
+          {/* Compte client */}
+          <Route path="/account" element={<AccountScreen />} />
+          <Route path="/orders"  element={<OrdersScreen />} />
+
           {/* Info */}
           <Route path="/about"     element={<AboutScreen />} />
           <Route path="/faq"       element={<FAQScreen />} />
@@ -89,10 +98,11 @@ function App() {
             </AdminRoute>
           }
         >
-          <Route index           element={<DashboardHome />} />
-          <Route path="products" element={<ProductsAdmin />} />
-          <Route path="orders"   element={<OrdersAdmin />} />
-          <Route path="promos"   element={<PromoCodes />} />
+          <Route index                element={<DashboardHome />} />
+          <Route path="products"      element={<ProductsAdmin />} />
+          <Route path="categories"    element={<CategoriesAdmin />} />
+          <Route path="orders"        element={<OrdersAdmin />} />
+          <Route path="promos"        element={<PromoCodes />} />
         </Route>
 
       </Routes>
