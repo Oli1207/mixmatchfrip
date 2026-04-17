@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { FiChevronRight, FiHeart, FiShare2, FiShield, FiTruck, FiRefreshCw, FiCheck, FiStar } from 'react-icons/fi'
+import { FiChevronRight, FiHeart, FiShare2, FiShield, FiTruck, FiRefreshCw, FiCheck, FiStar, FiCamera, FiMaximize2 } from 'react-icons/fi'
 import { productsAPI, wishlistAPI } from '../../utils/api'
 import useCartStore from '../../store/cart'
 import useAuthStore from '../../store/auth'
@@ -260,10 +260,12 @@ export default function ProductDetailScreen() {
 
           {/* Garanties */}
           <div className="pdp-perks">
-            <div className="pdp-perk"><FiCheck size={14}/> Piece lavee et prete a porter</div>
-            <div className="pdp-perk"><FiTruck size={14}/> Expedie sous 24-48h via Postes Canada</div>
-            <div className="pdp-perk"><FiRefreshCw size={14}/> Retours sous 48h si non conforme</div>
-            <div className="pdp-perk"><FiShield size={14}/> Paiement 100% securise via Stripe</div>
+            <div className="pdp-perk"><FiCheck size={14}/> Pièce nettoyée et prête à porter</div>
+            <div className="pdp-perk"><FiCamera size={14}/> Photographies authentiques, sans filtres ni retouches</div>
+            <div className="pdp-perk"><FiMaximize2 size={14}/> Guide des mesures détaillé — achetez sans risque d'erreur de taille</div>
+            <div className="pdp-perk"><FiTruck size={14}/> Expédiée sous 24 à 48h via Postes Canada</div>
+            <div className="pdp-perk"><FiRefreshCw size={14}/> Remboursement sous 48h si non conforme à la description</div>
+            <div className="pdp-perk"><FiShield size={14}/> Paiement 100% sécurisé — vos données bancaires sont protégées</div>
           </div>
 
           <button className="pdp-share"

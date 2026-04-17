@@ -364,6 +364,33 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
                   <span className="adm-form-label" style={{ margin:0 }}>Disponible à la vente</span>
                 </label>
               </div>
+
+              {/* ── Zone photo rapide (sans quitter l'onglet) ── */}
+              <div className="adm-form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="adm-form-label">
+                  Photos
+                  {newFiles.length > 0
+                    ? <span className="adm-form-hint"> — {newFiles.length} photo{newFiles.length > 1 ? 's' : ''} sélectionnée{newFiles.length > 1 ? 's' : ''}</span>
+                    : <span className="adm-form-hint"> — ajoutez les photos ici ou dans l'onglet <em>Photos</em></span>
+                  }
+                </label>
+                <div className="adm-quick-photos">
+                  {newFiles.map((file, i) => (
+                    <div key={i} className="adm-quick-thumb">
+                      <img src={URL.createObjectURL(file)} alt={`photo ${i + 1}`}/>
+                      <button type="button" className="adm-quick-thumb__del" onClick={() => handleRemoveNew(i)}>
+                        <FiX size={9}/>
+                      </button>
+                    </div>
+                  ))}
+                  <label className="adm-quick-add">
+                    <input type="file" accept="image/*" multiple style={{ display:'none' }}
+                      onChange={e => { handleNewFiles(Array.from(e.target.files)); e.target.value = '' }}/>
+                    <FiUpload size={14}/>
+                    <span>Ajouter</span>
+                  </label>
+                </div>
+              </div>
             </div>
           )}
 
