@@ -75,8 +75,7 @@ DATABASES = {
         'PORT':     env.str('DB_PORT', default='5432'),
     }
 }
-#'HOST':     env.str('DB_HOST', default='localhost'),
-#        'PORT':     env.str('DB_PORT', default='5432'),
+
 # ── Authentification ──────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'userauths.User'
 
@@ -160,8 +159,7 @@ EMAIL_USE_LOCALTIME = True
 STRIPE_SECRET_KEY = env.str('STRIPE_SECRET_KEY', default='')
 
 # ── Frontend URL (redirections Stripe/Paystack) ───────────────────────────────
-FRONTEND_URL = env.str('FRONTEND_URL')
-#FRONTEND_URL = env.str('FRONTEND_URL', default='http://localhost:5173')
+FRONTEND_URL = env.str('FRONTEND_URL', default='https://www.mixmatchfrip.com')
 # ── Chit Chats ────────────────────────────────────────────────────────────────
 CHITCHATS_ACCESS_TOKEN = env.str('CHITCHATS_ACCESS_TOKEN', default='')
 CHITCHATS_CLIENT_ID    = env.str('CHITCHATS_CLIENT_ID', default='')

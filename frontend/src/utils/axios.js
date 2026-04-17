@@ -8,7 +8,7 @@ const apiInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 1000000,
   headers: { Accept: "application/json" },
-  withCredentials: true,   // envoie les cookies de session Django à chaque requête
+  // withCredentials: false (JWT via Authorization header — pas besoin de cookies cross-origin)
 });
 
 function isTokenExpired(token) {
