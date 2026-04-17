@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { FiChevronDown, FiChevronUp, FiCheck, FiLock, FiAlertCircle, FiTag, FiX } from 'react-icons/fi'
 import useCartStore from '../../store/cart'
 import useAuthStore from '../../store/auth'
-import { ordersAPI, shippingAPI } from '../../utils/api'
+import { ordersAPI, shippingAPI, getLocalCartId, userAPI } from '../../utils/api'
 import apiInstance from '../../utils/axios'
 import { formatPrice } from '../../utils/currency'
 import './CheckoutScreen.css'
@@ -51,7 +51,7 @@ function Field({ label, id, error, children }) {
 
 // ─── Step 1 : Livraison ───────────────────────────────────────────────────────
 
-function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError, selectedRate, onSelectRate, isGuest, createAccount, onToggleCreateAccount }) {
+function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError, selectedRate, onSelectRate, isGuest, createAccount, onToggleCreateAccount, saveAddress, onToggleSaveAddress }) {
   return (
     <div className="checkout-step">
       <h2 className="checkout-step__title">Adresse de livraison</h2>
@@ -166,6 +166,20 @@ function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError,
               Vos identifiants de connexion vous seront communiqués par courriel.
             </p>
           )}
+        </div>
+      )}
+
+      {!isGuest && (
+        <div className="checkout-create-account">
+          <label className="checkout-create-account__label">
+            <input
+              type="checkbox"
+              className="checkout-create-account__checkbox"
+              checked={saveAddress}
+              onChange={e => onToggleSaveAddress(e.target.checked)}
+            />
+            <span>Enregistrer cette adresse pour mes prochaines commandes</span>
+          </label>
         </div>
       )}
     </div>
@@ -402,6 +416,7 @@ export default function CheckoutScreen() {
   const [apiError,       setApiError]      = useState(null)
   const [order,          setOrder]         = useState(null)
   const [createAccount,  setCreateAccount] = useState(false)
+  const [saveAddress,    setSaveAddress]   = useState(false)
 
   // Shipping rates state
   const [rates,        setRates]       = useState([])
@@ -434,6 +449,21 @@ export default function CheckoutScreen() {
 
   useEffect(() => {
     fetchCart()
+    // Pré-remplir le formulaire avec les données du compte connecté
+    if (isLoggedIn()) {
+      userAPI.me().then(({ data }) => {
+        const parts     = (data.full_name || '').trim().split(/\s+/)
+        const firstName = parts[0] || ''
+        const lastName  = parts.slice(1).join(' ') || ''
+        setForm(prev => ({
+          ...prev,
+          first_name: firstName || prev.first_name,
+          last_name:  lastName  || prev.last_name,
+          email:      data.email || prev.email,
+          phone:      data.phone || prev.phone,
+        }))
+      }).catch(() => {})
+    }
   }, [])
 
   // Fetch Canada Post rates when postal code changes (debounced 600ms)
@@ -509,11 +539,22 @@ export default function CheckoutScreen() {
   const handleContinueToPayment = () => {
     const e = validateShipping(form, selectedRate)
     if (Object.keys(e).length) { setErrors(e); return }
+    // Enregistrer l'adresse si l'utilisateur le souhaite
+    if (isLoggedIn() && saveAddress) {
+      userAPI.update({
+        full_name: `${form.first_name} ${form.last_name}`.trim(),
+        phone:     form.phone,
+      }).catch(() => {})
+    }
     setStep(1)
   }
 
   // Step 1: créer la commande → obtenir l'URL Stripe → rediriger
   const handlePay = async () => {
+    if (!selectedRate) {
+      setPayError('Veuillez retourner à l\'étape précédente et choisir un mode de livraison.')
+      return
+    }
     setPaying(true)
     setPayError(null)
 
@@ -593,6 +634,8 @@ export default function CheckoutScreen() {
                 isGuest={!isLoggedIn()}
                 createAccount={createAccount}
                 onToggleCreateAccount={setCreateAccount}
+                saveAddress={saveAddress}
+                onToggleSaveAddress={setSaveAddress}
               />
             )}
 
