@@ -457,7 +457,7 @@ def stripe_checkout_view(request, order_number):
     if not settings.STRIPE_SECRET_KEY:
         return Response({'detail': 'Stripe non configuré.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-    frontend_url = settings.FRONTEND_URL
+    frontend_url = "https://www.mixmatchfrip.com"
 
     try:
         session = stripe.checkout.Session.create(
