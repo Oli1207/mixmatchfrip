@@ -452,8 +452,10 @@ export default function CheckoutScreen() {
       const weightG = cart?.items?.reduce((sum, item) => {
         return sum + (item.product.weight_g || 400) * item.qty
       }, 0) || 500
+      // Valeur declaree = sous-total du panier (pour la valeur assurée Chit Chats)
+      const cartSubtotal = parseFloat(cart?.subtotal || 0)
       try {
-        const { data } = await shippingAPI.getRates(postal, weightG)
+        const { data } = await shippingAPI.getRates(postal, weightG, cartSubtotal || null)
         setRates(data)
         // Auto-select la premiere option non-retrait
         const first = data.find(r => r.code !== 'pickup') || data[0]

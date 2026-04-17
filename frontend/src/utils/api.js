@@ -59,6 +59,10 @@ export const ordersAPI = {
 // ─── Shipping ─────────────────────────────────────────────────────────────────
 
 export const shippingAPI = {
-  getRates: (postalCode, weightG = 500) =>
-    apiInstance.post('shipping/rates/', { postal_code: postalCode, weight_g: weightG }),
+  getRates: (postalCode, weightG = 500, cartValue = null) =>
+    apiInstance.post('shipping/rates/', {
+      postal_code: postalCode,
+      weight_g:    weightG,
+      ...(cartValue != null ? { cart_value: cartValue } : {}),
+    }),
 }

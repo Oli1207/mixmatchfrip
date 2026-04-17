@@ -589,6 +589,7 @@ def shipping_rates(request):
 
     destination = request.data.get('postal_code', '').replace(' ', '').upper()
     weight_g    = int(request.data.get('weight_g', 500))
+    cart_value  = request.data.get('cart_value')        # valeur du panier en $CAD (optionnel)
 
     if not destination:
         return Response({'detail': 'Code postal requis.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -598,7 +599,7 @@ def shipping_rates(request):
 
     if token and client_id:
         try:
-            rates = _get_chitchats_rates(destination, weight_g, token, client_id)
+            rates = _get_chitchats_rates(destination, weight_g, token, client_id, cart_value=cart_value)
             return Response(rates)
         except Exception as exc:
             log.error('Chit Chats API error: %s', exc)
@@ -629,7 +630,26 @@ _PROVINCE_CITY = {
 }
 
 
-def _get_chitchats_rates(destination_postal, weight_g, token, client_id):
+def _estimate_package_dimensions(weight_g):
+    """
+    Estime les dimensions d'un colis vêtements (cm) en fonction du poids.
+    Basé sur des tailles réelles d'envois de friperie.
+    """
+    if weight_g < 200:
+        return 20, 15, 3    # accessoire, chaussettes, foulard
+    elif weight_g < 400:
+        return 25, 20, 4    # t-shirt, débardeur
+    elif weight_g < 700:
+        return 30, 20, 5    # chemise, haut léger, pantalon fin
+    elif weight_g < 1000:
+        return 35, 25, 6    # jean, pull, robe légère
+    elif weight_g < 1500:
+        return 40, 30, 8    # pull épais, robe longue, veste légère
+    else:
+        return 50, 35, 10   # manteau, veste épaisse, multiple articles
+
+
+def _get_chitchats_rates(destination_postal, weight_g, token, client_id, cart_value=None):
     """
     Cree un colis temporaire Chit Chats avec postage_type=unknown pour obtenir
     les tarifs disponibles, puis supprime le colis immediatement.
@@ -638,10 +658,13 @@ def _get_chitchats_rates(destination_postal, weight_g, token, client_id):
     import logging, re
     log = logging.getLogger(__name__)
 
-    province_code = _province_from_postal(destination_postal)
-    city          = _PROVINCE_CITY.get(province_code, 'Montreal')
-    base_url      = f'https://chitchats.com/api/v1/clients/{client_id}/shipments'
-    headers       = {
+    province_code        = _province_from_postal(destination_postal)
+    city                 = _PROVINCE_CITY.get(province_code, 'Montreal')
+    size_x, size_y, size_z = _estimate_package_dimensions(weight_g)
+    declared_value       = str(round(float(cart_value), 2)) if cart_value else '50'
+
+    base_url = f'https://chitchats.com/api/v1/clients/{client_id}/shipments'
+    headers  = {
         'Authorization': token,
         'Content-Type':  'application/json',
     }
@@ -654,14 +677,14 @@ def _get_chitchats_rates(destination_postal, weight_g, token, client_id):
         'province_code':  province_code,
         'postal_code':    destination_postal,
         'country_code':   'CA',
-        'description':    'Vetements',
-        'value':          '50',
+        'description':    'Vetements seconde main',
+        'value':          declared_value,
         'value_currency': 'cad',
         'package_type':   'parcel',
         'size_unit':      'cm',
-        'size_x':         30,
-        'size_y':         20,
-        'size_z':         5,
+        'size_x':         size_x,
+        'size_y':         size_y,
+        'size_z':         size_z,
         'weight_unit':    'g',
         'weight':         max(weight_g, 50),
         'postage_type':   'unknown',
@@ -786,6 +809,15 @@ def admin_product_list(request):
 
     # POST — créer un produit
     data = request.data
+
+    # ── Validation des champs obligatoires ────────────────────────────────────
+    name  = (data.get('name') or '').strip()
+    price = data.get('price')
+    if not name:
+        return Response({'detail': 'Le nom du produit est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    if price in ('', None):
+        return Response({'detail': 'Le prix est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
     category_id    = data.get('category')
     subcategory_id = data.get('subcategory')
     try:
@@ -803,37 +835,50 @@ def admin_product_list(request):
         except (ValueError, TypeError):
             return None
 
-    product = Product.objects.create(
-        category            = category,
-        subcategory         = subcategory,
-        name                = data.get('name', ''),
-        brand               = data.get('brand', ''),
-        description         = data.get('description', ''),
-        price               = data.get('price', 0),
-        original_price      = _decimal_or_none(data.get('original_price')),
-        size                = data.get('size', 'M'),
-        size_tag            = data.get('size_tag', ''),
-        size_recommendation = data.get('size_recommendation', ''),
-        condition           = data.get('condition', 'good'),
-        color               = data.get('color', []),
-        stock               = int(data.get('stock', 1)),
-        weight_g            = int(data.get('weight_g', 400)),
-        is_available        = data.get('is_available', True),
-        material            = data.get('material', ''),
-        details             = data.get('details', ''),
-        bullet_1            = data.get('bullet_1', ''),
-        bullet_2            = data.get('bullet_2', ''),
-        bullet_3            = data.get('bullet_3', ''),
-        bullet_4            = data.get('bullet_4', ''),
-        mix_match_tips      = data.get('mix_match_tips', ''),
-        expert_tip          = data.get('expert_tip', ''),
-        measure_shoulder    = _decimal_or_none(data.get('measure_shoulder')),
-        measure_chest       = _decimal_or_none(data.get('measure_chest')),
-        measure_waist       = _decimal_or_none(data.get('measure_waist')),
-        measure_hips        = _decimal_or_none(data.get('measure_hips')),
-        measure_length      = _decimal_or_none(data.get('measure_length')),
-        measure_sleeve      = _decimal_or_none(data.get('measure_sleeve')),
-    )
+    def _safe_int(val, default):
+        try:
+            return int(val) if val not in ('', None) else default
+        except (ValueError, TypeError):
+            return default
+
+    try:
+        product = Product.objects.create(
+            category            = category,
+            subcategory         = subcategory,
+            name                = name,
+            brand               = data.get('brand', ''),
+            description         = data.get('description', ''),
+            price               = price,
+            original_price      = _decimal_or_none(data.get('original_price')),
+            size                = data.get('size', 'M'),
+            size_tag            = data.get('size_tag', ''),
+            size_recommendation = data.get('size_recommendation', ''),
+            condition           = data.get('condition', 'good'),
+            color               = data.get('color', []),
+            stock               = _safe_int(data.get('stock'), 1),
+            weight_g            = _safe_int(data.get('weight_g'), 400),
+            is_available        = data.get('is_available', True),
+            material            = data.get('material', ''),
+            details             = data.get('details', ''),
+            bullet_1            = data.get('bullet_1', ''),
+            bullet_2            = data.get('bullet_2', ''),
+            bullet_3            = data.get('bullet_3', ''),
+            bullet_4            = data.get('bullet_4', ''),
+            mix_match_tips      = data.get('mix_match_tips', ''),
+            expert_tip          = data.get('expert_tip', ''),
+            measure_shoulder    = _decimal_or_none(data.get('measure_shoulder')),
+            measure_chest       = _decimal_or_none(data.get('measure_chest')),
+            measure_waist       = _decimal_or_none(data.get('measure_waist')),
+            measure_hips        = _decimal_or_none(data.get('measure_hips')),
+            measure_length      = _decimal_or_none(data.get('measure_length')),
+            measure_sleeve      = _decimal_or_none(data.get('measure_sleeve')),
+        )
+    except Exception as exc:
+        return Response(
+            {'detail': f'Erreur lors de la création du produit : {exc}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
     return Response(ProductDetailSerializer(product, context={'request': request}).data,
                     status=status.HTTP_201_CREATED)
 
@@ -1111,10 +1156,11 @@ def admin_subcategory_detail(request, pk):
 # ─── Promo Apply (public — utilise par le checkout) ───────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def promo_apply(request):
     """
     Valide un code promo et retourne le montant de remise.
+    Accessible aux invités et utilisateurs connectés.
     Body: { code: str, subtotal: float }
     """
     code     = request.data.get('code', '').strip().upper()
