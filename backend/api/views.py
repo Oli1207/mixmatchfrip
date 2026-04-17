@@ -873,14 +873,18 @@ def admin_product_list(request):
             measure_length      = _decimal_or_none(data.get('measure_length')),
             measure_sleeve      = _decimal_or_none(data.get('measure_sleeve')),
         )
+        # ⚠️ La sérialisation est incluse dans le même try pour capturer toute exception
+        return Response(
+            ProductDetailSerializer(product, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
     except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error('admin_product_list POST error: %s', exc, exc_info=True)
         return Response(
             {'detail': f'Erreur lors de la création du produit : {exc}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-    return Response(ProductDetailSerializer(product, context={'request': request}).data,
-                    status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])

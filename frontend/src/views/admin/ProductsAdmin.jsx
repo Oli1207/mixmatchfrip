@@ -234,8 +234,10 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true); setError(null)
+
+    // ── Étape 1 : sauvegarder les données du produit ────────────────────────────
+    let saved
     try {
-      let saved
       if (product) {
         const { data } = await adminAPI.products.update(product.id, form)
         saved = data
@@ -243,34 +245,56 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
         const { data } = await adminAPI.products.create(form)
         saved = data
       }
-
-      // Supprimer images marquées
-      await Promise.all(toDelete.map(id => adminAPI.products.deleteImage(saved.id, id)))
-
-      // Mettre à jour l'image principale parmi les existantes
-      const mainExisting = existingImages.find(img => img.is_main)
-      if (mainExisting && product?.images) {
-        const orig = product.images.find(i => i.id === mainExisting.id)
-        if (orig && !orig.is_main) {
-          // On ne peut pas mettre à jour via l'API actuelle — skip pour l'instant
-        }
-      }
-
-      // Uploader nouvelles images
-      const effectiveMainIdx = newMainIdx !== null ? newMainIdx : 0
-      for (let i = 0; i < newFiles.length; i++) {
-        const fd = new FormData()
-        fd.append('image', newFiles[i])
-        if (existingImages.length === 0 && i === effectiveMainIdx) fd.append('is_main', 'true')
-        await adminAPI.products.uploadImage(saved.id, fd)
-      }
-
-      onSaved()
     } catch (err) {
       const d = err?.response?.data
-      setError(d ? Object.values(d).flat().join(' ') : 'Erreur lors de la sauvegarde.')
-    } finally {
+      let msg = 'Erreur lors de la sauvegarde.'
+      if (d) {
+        if (typeof d === 'string') {
+          // Django renvoie une page HTML 500 (migration non appliquée, erreur serveur…)
+          const code = err.response?.status || 500
+          msg = `Erreur serveur ${code}. Vérifiez que les migrations sont appliquées sur le serveur (python manage.py migrate).`
+        } else if (d.detail) {
+          msg = String(d.detail)
+        } else {
+          const vals = Object.values(d).flat().filter(Boolean)
+          msg = vals.length ? vals.join(' ') : msg
+        }
+      }
+      setError(msg)
       setSaving(false)
+      return
+    }
+
+    // ── Étape 2 : supprimer les images marquées ─────────────────────────────────
+    await Promise.all(
+      toDelete.map(id => adminAPI.products.deleteImage(saved.id, id).catch(() => {}))
+    )
+
+    // ── Étape 3 : uploader les nouvelles images ─────────────────────────────────
+    const effectiveMainIdx = newMainIdx !== null ? newMainIdx : 0
+    let uploadFailed = 0
+    for (let i = 0; i < newFiles.length; i++) {
+      const fd = new FormData()
+      fd.append('image', newFiles[i])
+      if (existingImages.length === 0 && i === effectiveMainIdx) fd.append('is_main', 'true')
+      try {
+        await adminAPI.products.uploadImage(saved.id, fd)
+      } catch {
+        uploadFailed++
+      }
+    }
+
+    setSaving(false)
+
+    if (uploadFailed > 0) {
+      // Produit sauvegardé mais certaines photos ont échoué
+      setError(
+        `Produit sauvegardé ✓ — ${uploadFailed} photo(s) non téléversée(s). ` +
+        `Ouvrez à nouveau ce produit pour les ajouter depuis l'onglet Photos.`
+      )
+      setTimeout(onSaved, 3000) // ferme après 3 s pour laisser le temps de lire
+    } else {
+      onSaved()
     }
   }
 
@@ -294,7 +318,11 @@ function ProductModal({ product, categories, allSubcategories, onClose, onSaved 
         </div>
 
         <form className="adm-modal__body" onSubmit={handleSubmit}>
-          {error && <div className="adm-modal__error"><FiAlertCircle size={14}/> {error}</div>}
+          {error && (
+            <div className={`adm-modal__error${error.startsWith('Produit sauvegardé') ? ' adm-modal__error--warn' : ''}`}>
+              <FiAlertCircle size={14}/> {error}
+            </div>
+          )}
 
           {/* ── Tab 1 : Essentiel ── */}
           {tab === 'essential' && (

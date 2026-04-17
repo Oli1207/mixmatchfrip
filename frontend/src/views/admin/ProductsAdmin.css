@@ -290,8 +290,15 @@
   border-radius: 6px;
   margin-bottom: 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+  line-height: 1.5;
+}
+/* Message de succès partiel (produit sauvegardé mais images échouées) */
+.adm-modal__error--warn {
+  background: #fffbf0;
+  border-color: #f6d860;
+  color: #92620a;
 }
 
 /* ── Modal Tabs ── */
