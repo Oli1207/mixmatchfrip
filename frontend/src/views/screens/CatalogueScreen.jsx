@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FiFilter, FiX, FiChevronDown, FiChevronUp, FiSearch } from 'react-icons/fi'
 import { productsAPI, categoriesAPI } from '../../utils/api'
+import { formatPrice } from '../../utils/currency'
 import './CatalogueScreen.css'
 import SEOHead from '../../components/SEOHead'
 
@@ -51,9 +52,9 @@ function ProductCard({ product }) {
           <span className="cat-card__tag">{product.condition}</span>
         </div>
         <div className="cat-card__prices">
-          <span className="cat-card__price">{product.price} $</span>
+          <span className="cat-card__price">{formatPrice(product.price)}</span>
           {product.original_price && (
-            <span className="cat-card__original">{product.original_price} $</span>
+            <span className="cat-card__original">{formatPrice(product.original_price)}</span>
           )}
         </div>
       </div>

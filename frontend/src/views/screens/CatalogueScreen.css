@@ -236,6 +236,10 @@
   .cat-filter-btn-mobile { display: flex; }
   .cat-header { padding: 20px 16px; }
   .cat-search-input { width: 120px; }
+  /* Cards simplifiées sur mobile */
+  .cat-card__meta     { display: none; }
+  .cat-card__price    { white-space: nowrap; }
+  .cat-card__original { white-space: nowrap; }
 }
 @media (max-width: 480px) {
   .cat-grid               { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -250,8 +254,9 @@
   .cat-card__info         { padding: 8px 10px 12px; }
   .cat-card__brand        { font-size: 9px; }
   .cat-card__name         { font-size: 12px; margin-bottom: 4px; }
-  .cat-card__tag          { font-size: 10px; padding: 2px 6px; }
-  .cat-card__price        { font-size: 13px; }
+  .cat-card__meta         { display: none; }
+  .cat-card__price        { font-size: 13px; white-space: nowrap; }
+  .cat-card__original     { white-space: nowrap; }
   /* Category pills */
   .cat-category-pill      { padding: 6px 12px; font-size: 12px; }
   /* Filter button */

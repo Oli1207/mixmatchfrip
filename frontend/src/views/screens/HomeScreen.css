@@ -687,6 +687,10 @@
 @media (max-width: 640px) {
   .hs-section           { padding: 48px 0; }
   .hs-container         { padding: 0 16px; }
+  /* Cards simplifiées sur mobile */
+  .hs-card__meta        { display: none; }
+  .hs-card__price       { white-space: nowrap; }
+  .hs-card__original    { white-space: nowrap; }
   .hs-section-header    { flex-direction: column; gap: 8px; margin-bottom: 28px; }
   .hs-section-title     { font-size: 24px; }
   .hs-hero__left        { padding: 52px 0 32px; }
@@ -716,7 +720,9 @@
   .hs-products__grid       { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   /* Cards */
   .hs-card__name           { font-size: 13px; }
-  .hs-card__price          { font-size: 14px; }
+  .hs-card__meta           { display: none; }
+  .hs-card__price          { font-size: 14px; white-space: nowrap; }
+  .hs-card__original       { white-space: nowrap; }
   /* Perks */
   .hs-perk                 { padding: 20px 16px; }
   .hs-perk__title          { font-size: 14px; }

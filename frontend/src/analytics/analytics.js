@@ -4,7 +4,7 @@
  * Toutes les requêtes sont fire-and-forget (erreurs silencieuses).
  */
 
-import apiInstance from '../utils/api'
+import apiInstance from '../utils/axios'
 
 const SESSION_KEY = 'mmf_session_id'
 const SESSION_INIT_KEY = 'mmf_session_init'
