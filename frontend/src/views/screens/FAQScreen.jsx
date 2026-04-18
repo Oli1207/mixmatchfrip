@@ -7,7 +7,7 @@ const CATEGORIES = [
   {
     title: 'Commandes & Paiement',
     items: [
-      { q: 'Quels modes de paiement acceptez-vous ?', a: 'Nous acceptons les cartes Visa, Mastercard et American Express via notre partenaire de paiement sécurisé Paystack. Toutes les transactions sont chiffrées.' },
+      { q: 'Quels modes de paiement acceptez-vous ?', a: 'Nous acceptons les cartes Visa, Mastercard et American Express via notre partenaire de paiement sécurisé Stripe. Toutes les transactions sont chiffrées.' },
       { q: 'Puis-je modifier ou annuler ma commande ?', a: 'Vous pouvez annuler votre commande dans les 2 heures suivant l\'achat en nous contactant par email. Passé ce délai, la commande est déjà en traitement.' },
       { q: 'Ma commande est-elle sécurisée ?', a: 'Absolument. Toutes vos informations personnelles et bancaires sont protégées par un chiffrement SSL de bout en bout. Nous ne stockons jamais vos données de carte.' },
     ],

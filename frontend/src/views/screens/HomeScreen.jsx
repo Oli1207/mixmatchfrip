@@ -271,10 +271,10 @@ export default function HomeScreen() {
           <div className="hs-section-header">
             <h2 className="hs-section-title">
               <SiInstagram size={20} style={{ marginRight: 8, color: 'var(--gold)' }} />
-              @mixmatchfrip
+              @mixmatch_frip
             </h2>
             <a
-              href="https://www.instagram.com/mixmatchfrip"
+              href="https://www.instagram.com/mixmatch_frip"
               target="_blank"
               rel="noopener noreferrer"
               className="hs-section-link"

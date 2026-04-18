@@ -124,7 +124,7 @@ export default function Footer() {
               <h5 className="mmf-footer__col-title" style={{ marginTop: '24px' }}>Réseaux sociaux</h5>
               <div className="mmf-footer__socials">
                 <a
-                  href="https://www.instagram.com/mixmatchfrip"
+                  href="https://www.instagram.com/mixmatch_frip"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mmf-footer__social"

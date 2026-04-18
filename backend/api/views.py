@@ -7,6 +7,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
+from django.views.decorators.cache import never_cache
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 from rest_framework import status
@@ -194,6 +195,7 @@ def wishlist_toggle(request):
 
 # ─── Cart ─────────────────────────────────────────────────────────────────────
 
+@never_cache
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def cart_detail(request):

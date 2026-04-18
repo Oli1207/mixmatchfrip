@@ -100,7 +100,7 @@ function Register() {
       </p>
 
       <p>
-        <strong>Paiements (Paystack)</strong> : les paiements sont traités de manière sécurisée via Paystack.
+        <strong>Paiements (Stripe)</strong> : les paiements sont traités de manière sécurisée via Stripe.
         Mix&Match Frip ne stocke pas vos informations de carte bancaire. Seules des références de transaction
         (ID, statut, montant, date) sont conservées à des fins de support et de prévention de la fraude.
       </p>

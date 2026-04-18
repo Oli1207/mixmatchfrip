@@ -155,7 +155,7 @@ export default function CartScreen() {
                 </button>
 
                 <p className="cart-summary__note">
-                  Paiement sécurisé via <strong>Paystack</strong>
+                  Paiement sécurisé via <strong>Stripe</strong>
                 </p>
               </div>
 

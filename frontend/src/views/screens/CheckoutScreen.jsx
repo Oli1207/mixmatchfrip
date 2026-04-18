@@ -224,7 +224,7 @@ function PaymentStep({ form, shippingCost, cart, discount, promoCode, onPay, pay
       <div className="payment-notice">
         <FiLock size={14}/>
         <span>
-          Paiement securise via <strong>Paystack</strong>. Vos donnees bancaires ne
+          Paiement securise via <strong>Stripe</strong>. Vos donnees bancaires ne
           transitent jamais par nos serveurs.
         </span>
       </div>
@@ -246,7 +246,7 @@ function PaymentStep({ form, shippingCost, cart, discount, promoCode, onPay, pay
         onClick={onPay}
         disabled={paying}
       >
-        {paying ? 'Traitement...' : `Payer ${formatPrice(total)} avec Paystack`}
+        {paying ? 'Traitement...' : `Payer ${formatPrice(total)} avec Stripe`}
       </button>
     </div>
   )
