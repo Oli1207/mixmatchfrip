@@ -48,4 +48,8 @@ export const adminAPI = {
   clients: {
     list: () => apiInstance.get('admin/clients/'),
   },
+
+  analytics: {
+    overview: (days = 30) => apiInstance.get('admin/analytics/', { params: { days } }),
+  },
 }

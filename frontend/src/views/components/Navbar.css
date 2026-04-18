@@ -354,3 +354,14 @@
   .mmf-nav__inner { padding: 0 14px; height: 60px; }
   .mmf-nav__logo img { height: 46px; width: 46px; }
 }
+
+@media (max-width: 480px) {
+  .mmf-nav__inner    { padding: 0 12px; height: 56px; }
+  .mmf-nav__logo img { height: 40px; width: 40px; }
+  /* Icons zone — plus espacés pour le tap */
+  .mmf-nav__actions  { gap: 4px; }
+  .mmf-nav__icon-btn { width: 40px; height: 40px; }
+  .mmf-nav__burger   { width: 40px; height: 40px; }
+  /* Menu mobile full width, safe area notch */
+  .mmf-mobile        { max-width: 100%; padding-bottom: env(safe-area-inset-bottom, 16px); }
+}

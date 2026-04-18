@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { cartAPI, saveLocalCartId } from '../utils/api'
+import { events as analyticsEvents } from '../analytics/analytics'
 
 const useCartStore = create((set, get) => ({
   cart:    null,   // { id, cart_id, items, subtotal, tax, total, item_count }
@@ -19,12 +20,14 @@ const useCartStore = create((set, get) => ({
   },
 
   // ── Add ────────────────────────────────────────────────────────────────────
-  addItem: async (productId, qty = 1) => {
+  addItem: async (productId, qty = 1, productMeta = null) => {
     set({ loading: true, error: null })
     try {
       const { data } = await cartAPI.add(productId, qty)
       saveLocalCartId(data.cart_id)
       set({ cart: data, loading: false })
+      // Track analytics
+      if (productMeta) analyticsEvents.addToCart(productMeta, qty)
       return { success: true }
     } catch (err) {
       const msg = err?.response?.data?.detail || "Erreur lors de l'ajout."
@@ -46,12 +49,14 @@ const useCartStore = create((set, get) => ({
   },
 
   // ── Remove ─────────────────────────────────────────────────────────────────
-  removeItem: async (itemId) => {
+  removeItem: async (itemId, productMeta = null) => {
     set({ loading: true, error: null })
     try {
       const { data } = await cartAPI.remove(itemId)
       saveLocalCartId(data.cart_id)
       set({ cart: data, loading: false })
+      // Track analytics
+      if (productMeta) analyticsEvents.removeFromCart(productMeta.id, productMeta.name)
     } catch (err) {
       set({ loading: false, error: err?.response?.data?.detail || 'Erreur.' })
     }

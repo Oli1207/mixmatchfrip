@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FiPlus, FiMinus } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import './FAQScreen.css'
+import SEOHead, { schemaFAQ } from '../../components/SEOHead'
 
 const CATEGORIES = [
   {
@@ -58,8 +59,16 @@ export default function FAQScreen() {
     ? CATEGORIES.filter(c => c.title === activeCategory)
     : CATEGORIES
 
+  const allFaqItems = CATEGORIES.flatMap(c => c.items)
+
   return (
     <div className="faq-page">
+      <SEOHead
+        title="FAQ — Questions fréquentes"
+        description="Toutes les réponses à vos questions sur les commandes, la livraison, les retours et la qualité des articles MixMatchFrip."
+        url="/faq"
+        schema={schemaFAQ(allFaqItems)}
+      />
       <div className="faq-header">
         <div className="faq-header__inner">
           <p className="faq-header__tag">Aide</p>
@@ -108,7 +117,7 @@ export default function FAQScreen() {
             <h3 className="faq-contact__title">Vous n'avez pas trouvé votre réponse ?</h3>
             <p className="faq-contact__text">Notre équipe est disponible du lundi au vendredi de 9h à 18h.</p>
             <div className="faq-contact__actions">
-              <a href="mailto:contact@mixmatchfrip.ca" className="btn-gold">Nous écrire</a>
+              <a href="mailto:support@mixmatchfrip.com" className="btn-gold">Nous écrire</a>
               <Link to="/livraison" className="btn-dark-outline">Infos livraison</Link>
             </div>
           </div>

@@ -243,3 +243,21 @@
   .about-story, .about-team { padding: 48px 16px; }
   .about-values, .about-cta  { padding: 48px 16px; }
 }
+
+@media (max-width: 480px) {
+  .about-hero             { height: 260px; }
+  .about-hero__content    { padding: 0 16px; }
+  .about-hero__tag        { font-size: 9px; }
+  .about-hero__title      { font-size: 26px; }
+  .about-story__title,
+  .about-values__title,
+  .about-team__title      { font-size: 22px; }
+  .about-story__img-wrap  { height: 240px; }
+  .about-value-card       { padding: 20px 16px; }
+  .about-team__grid       { max-width: 100%; }
+  .about-team-card__img-wrap { width: 100px; height: 100px; }
+  .about-cta__title       { font-size: 22px; }
+  .about-cta__actions     { flex-direction: column; align-items: center; }
+  .about-story, .about-team,
+  .about-values, .about-cta { padding: 36px 14px; }
+}

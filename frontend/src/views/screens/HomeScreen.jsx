@@ -23,6 +23,7 @@ import insta5         from '../../assets/insta-5.jpg'
 import insta6         from '../../assets/insta-6.jpg'
 
 import './HomeScreen.css'
+import SEOHead, { schemaOrganization, schemaWebSite } from '../../components/SEOHead'
 
 // Icônes par slug de catégorie (composants react-icons)
 const CAT_ICONS = {
@@ -109,8 +110,18 @@ export default function HomeScreen() {
     setEmail('')
   }
 
+  const homeSchema = {
+    '@context': 'https://schema.org',
+    '@graph': [schemaOrganization, schemaWebSite],
+  }
+
   return (
     <div className="hs">
+      <SEOHead
+        url="/"
+        description="Découvrez des vêtements seconde main uniques, chinés avec soin à Montréal. Robes, blazers, manteaux — livraison partout au Canada."
+        schema={homeSchema}
+      />
 
       {/* ══ HERO ══ */}
       <section className="hs-hero">

@@ -69,6 +69,36 @@ button {
 }
 
 /* =========================================
+   MOBILE GLOBAL — Safe area + touch fixes
+   ========================================= */
+
+/* Support encoches (iPhone X+, Android notch) */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Tap highlight désactivé pour une UI propre */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Liens et boutons : zone de tap minimale */
+a, button {
+  touch-action: manipulation;
+}
+
+/* Inputs : pas de zoom auto sur iOS (min 16px) */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
+/* Scrolling fluide sur iOS */
+.overflow-scroll-mobile {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+
+/* =========================================
    UTILITAIRES
    ========================================= */
 .gold-text { color: var(--gold); }

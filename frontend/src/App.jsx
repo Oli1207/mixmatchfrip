@@ -23,6 +23,8 @@ import CheckoutScreen      from './views/screens/CheckoutScreen'
 import AboutScreen          from './views/screens/AboutScreen'
 import FAQScreen            from './views/screens/FAQScreen'
 import LivraisonScreen      from './views/screens/LivraisonScreen'
+import ContactScreen        from './views/screens/ContactScreen'
+import PolicyScreen         from './views/screens/PolicyScreen'
 import PaymentSuccessScreen from './views/screens/PaymentSuccessScreen'
 import PaymentFailedScreen  from './views/screens/PaymentFailedScreen'
 
@@ -39,6 +41,9 @@ import NewsletterAdmin   from './views/admin/NewsletterAdmin'
 // Account
 import AccountScreen    from './views/screens/AccountScreen'
 import OrdersScreen     from './views/screens/OrdersScreen'
+import AnalyticsAdmin   from './views/admin/AnalyticsAdmin'
+
+import AnalyticsProvider from './analytics/AnalyticsProvider'
 
 // Wrapper boutique publique (Navbar + Footer autour des routes enfants)
 function PublicLayout() {
@@ -54,6 +59,7 @@ function PublicLayout() {
 function App() {
   return (
     <BrowserRouter>
+      <AnalyticsProvider>
       <Routes>
 
         {/* ── Boutique publique ─────────────────────────────── */}
@@ -87,6 +93,8 @@ function App() {
           <Route path="/about"     element={<AboutScreen />} />
           <Route path="/faq"       element={<FAQScreen />} />
           <Route path="/livraison" element={<LivraisonScreen />} />
+          <Route path="/contact"   element={<ContactScreen />} />
+          <Route path="/policy"    element={<PolicyScreen />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
@@ -107,9 +115,11 @@ function App() {
           <Route path="promos"        element={<PromoCodes />} />
           <Route path="clients"       element={<ClientsAdmin />} />
           <Route path="newsletter"    element={<NewsletterAdmin />} />
+          <Route path="analytics"     element={<AnalyticsAdmin />} />
         </Route>
 
       </Routes>
+      </AnalyticsProvider>
     </BrowserRouter>
   )
 }

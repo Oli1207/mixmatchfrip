@@ -3,6 +3,7 @@ import { FiRefreshCw, FiCheck, FiFeather, FiHeart } from 'react-icons/fi'
 import aboutImg from '../../assets/about.jpg'
 import bannerImg from '../../assets/banner.jpg'
 import './AboutScreen.css'
+import SEOHead, { schemaOrganization } from '../../components/SEOHead'
 
 const VALUES = [
   { Icon: FiRefreshCw, title: 'Mode circulaire',   desc: 'Chaque pièce a une histoire. Nous lui donnons une seconde vie plutôt qu\'une destination en décharge.' },
@@ -20,6 +21,18 @@ const TEAM = [
 export default function AboutScreen() {
   return (
     <div className="about-page">
+      <SEOHead
+        title="À propos"
+        description="MixMatchFrip, friperie en ligne à Montréal. Notre mission : rendre la mode seconde main aussi désirable que la mode neuve. Mode circulaire, qualité vérifiée, impact réduit."
+        url="/about"
+        schema={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            schemaOrganization,
+            { '@type': 'AboutPage', name: 'À propos — MixMatchFrip', url: 'https://mixmatchfrip.com/about' },
+          ],
+        }}
+      />
       {/* Hero */}
       <section className="about-hero" style={{ backgroundImage: `url(${bannerImg})` }}>
         <div className="about-hero__overlay" />

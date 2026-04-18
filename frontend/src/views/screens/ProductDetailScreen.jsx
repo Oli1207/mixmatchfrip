@@ -6,6 +6,8 @@ import useCartStore from '../../store/cart'
 import useAuthStore from '../../store/auth'
 import { formatPrice } from '../../utils/currency'
 import './ProductDetailScreen.css'
+import SEOHead, { schemaProduct, schemaBreadcrumb } from '../../components/SEOHead'
+import { events as analyticsEvents } from '../../analytics/analytics'
 
 const CONDITION_META = {
   new_with_tags: { label: 'Neuf avec etiquette', color: '#1a7a4a', bg: '#e8f5ee', desc: 'Jamais porte, etiquette d\'origine presente.' },
@@ -44,14 +46,18 @@ export default function ProductDetailScreen() {
     setActiveImg(0)
     setActiveTab('description')
     productsAPI.detail(slug)
-      .then(({ data }) => { setProduct(data); setLoading(false) })
+      .then(({ data }) => {
+        setProduct(data)
+        setLoading(false)
+        analyticsEvents.viewProduct(data)
+      })
       .catch(() => { setError('Produit introuvable.'); setLoading(false) })
   }, [slug])
 
   const handleAddToCart = async () => {
     if (cartLoading) return
     setCartLoading(true)
-    const result = await addItem(product.id)
+    const result = await addItem(product.id, 1, product)
     setCartLoading(false)
     if (result.success) {
       setAddedToCart(true)
@@ -118,8 +124,30 @@ export default function ProductDetailScreen() {
     { label: 'Longueur des manches',value: product.measure_sleeve },
   ].filter(m => m.value != null)
 
+  const mainImageUrl = images[0]?.image || null
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      schemaProduct(product, mainImageUrl),
+      schemaBreadcrumb([
+        { name: 'Accueil', url: '/' },
+        { name: 'Catalogue', url: '/catalogue' },
+        { name: product.category?.name || 'Catégorie', url: `/catalogue?category=${product.category?.slug}` },
+        { name: product.name },
+      ]),
+    ],
+  }
+
   return (
     <div className="pdp">
+      <SEOHead
+        title={`${product.brand ? `${product.brand} — ` : ''}${product.name}`}
+        description={product.description || `${product.name}${product.brand ? ` par ${product.brand}` : ''}. Taille ${product.size}. État : ${condInfo.label}. ${product.price} $ CAD — livraison partout au Canada.`}
+        image={mainImageUrl || undefined}
+        url={`/product/${product.slug}`}
+        type="og:product"
+        schema={productSchema}
+      />
 
       {/* Breadcrumb */}
       <div className="pdp-breadcrumb">

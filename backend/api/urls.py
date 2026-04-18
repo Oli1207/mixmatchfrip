@@ -59,6 +59,11 @@ urlpatterns = [
     # ── Promo ─────────────────────────────────────────────────────────────────
     path('promo/apply/', views.promo_apply, name='promo-apply'),
 
+    # ── Analytics ─────────────────────────────────────────────────────────────
+    path('analytics/session/', views.analytics_session, name='analytics-session'),
+    path('analytics/event/',   views.analytics_event,   name='analytics-event'),
+    path('admin/analytics/',   views.admin_analytics_overview, name='admin-analytics'),
+
     # ── Admin ─────────────────────────────────────────────────────────────────
     path('admin/stats/',                            views.admin_stats,               name='admin-stats'),
     path('admin/products/',                         views.admin_product_list,         name='admin-products'),

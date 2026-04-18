@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Pages privées / admin
+Disallow: /dashboard/
+Disallow: /dashboard/*
+Disallow: /checkout
+Disallow: /payment-success/
+Disallow: /payment-failed/
+Disallow: /account
+Disallow: /orders
+
+# Sitemap
+Sitemap: https://mixmatchfrip.com/sitemap.xml

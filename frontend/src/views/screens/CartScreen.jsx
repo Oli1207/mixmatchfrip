@@ -55,7 +55,7 @@ function CartItem({ item, onQtyChange, onRemove }) {
         <span className="cart-item__sub-price">{formatPrice(item.line_total)}</span>
       </div>
 
-      <button className="cart-item__remove" onClick={() => onRemove(item.id)} aria-label="Supprimer">
+      <button className="cart-item__remove" onClick={() => onRemove(item.id, product)} aria-label="Supprimer">
         <FiTrash2 size={16}/>
       </button>
     </div>

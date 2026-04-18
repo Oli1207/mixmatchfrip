@@ -181,3 +181,25 @@
   .pdp-tab { padding: 10px 14px; font-size: 13px; }
   .pdp-measures { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 480px) {
+  /* Nom produit */
+  .pdp-name              { font-size: clamp(20px, 6vw, 26px); }
+  .pdp-price             { font-size: 22px; }
+  /* Galerie */
+  .pdp-gallery__main     { min-height: 300px; }
+  .pdp-thumb             { width: 52px; height: 64px; }
+  /* Boutons CTA */
+  .pdp-cta               { flex-direction: column; gap: 10px; }
+  .pdp-cta > *           { width: 100%; min-height: 50px; font-size: 13px; }
+  .pdp-wishlist-btn      { width: 50px !important; min-height: 50px; }
+  /* Tabs */
+  .pdp-tab               { padding: 8px 10px; font-size: 12px; }
+  /* Articles similaires */
+  .pdp-related__grid     { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .pdp-related__title    { font-size: 20px; }
+  /* Mesures */
+  .pdp-measures          { grid-template-columns: 1fr; }
+  /* Info badges */
+  .pdp-reassurance       { grid-template-columns: 1fr; gap: 8px; }
+}

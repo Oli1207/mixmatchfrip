@@ -6,7 +6,10 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Avg
+from django.db.models.functions import TruncDate
+from urllib.parse import urlparse
+import datetime
 from django.views.decorators.cache import never_cache
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -19,6 +22,8 @@ from .models import (
     Category, Subcategory, Product, ProductImage,
     Wishlist, Cart, CartItem,
     Order, OrderItem, PromoCode,
+    NewsletterSubscriber,
+    AnalyticsSession, AnalyticsEvent,
 )
 from .serializers import (
     CategorySerializer, SubcategorySerializer, SubcategoryAdminSerializer,
@@ -1252,6 +1257,208 @@ def admin_subcategory_detail(request, pk):
     sub.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ─── Analytics ────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _detect_device(user_agent: str) -> str:
+    ua = user_agent.lower()
+    if any(k in ua for k in ('iphone', 'android', 'mobile', 'phone')):
+        return 'mobile'
+    if any(k in ua for k in ('ipad', 'tablet')):
+        return 'tablet'
+    if user_agent:
+        return 'desktop'
+    return 'unknown'
+
+
+def _extract_domain(url: str) -> str:
+    if not url:
+        return ''
+    try:
+        return urlparse(url).netloc.replace('www.', '')
+    except Exception:
+        return ''
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def analytics_session(request):
+    """Initialise ou met à jour une session analytics."""
+    data       = request.data
+    session_id = data.get('session_id', '').strip()
+    if not session_id:
+        return Response({'detail': 'session_id requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    referrer   = data.get('referrer', '')
+
+    defaults = {
+        'utm_source':      data.get('utm_source', ''),
+        'utm_medium':      data.get('utm_medium', ''),
+        'utm_campaign':    data.get('utm_campaign', ''),
+        'utm_content':     data.get('utm_content', ''),
+        'utm_term':        data.get('utm_term', ''),
+        'referrer':        referrer,
+        'referrer_domain': _extract_domain(referrer),
+        'landing_page':    data.get('landing_page', ''),
+        'device_type':     _detect_device(user_agent),
+        'user_agent':      user_agent[:500],
+    }
+
+    if request.user and request.user.is_authenticated:
+        defaults['user'] = request.user
+
+    session, created = AnalyticsSession.objects.get_or_create(
+        session_id=session_id,
+        defaults=defaults,
+    )
+
+    # Mettre à jour les UTM si la session existe déjà sans UTM
+    if not created and not session.utm_source and defaults.get('utm_source'):
+        for field, val in defaults.items():
+            setattr(session, field, val)
+        session.save()
+
+    return Response({'ok': True, 'created': created})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def analytics_event(request):
+    """Enregistre un événement analytics (fire-and-forget)."""
+    data       = request.data
+    session_id = data.get('session_id', '').strip()
+    event_type = data.get('event_type', '').strip()
+
+    if not session_id or not event_type:
+        return Response({'detail': 'session_id et event_type requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        session = AnalyticsSession.objects.get(session_id=session_id)
+    except AnalyticsSession.DoesNotExist:
+        return Response({'detail': 'Session inconnue.'}, status=status.HTTP_404_NOT_FOUND)
+
+    user = request.user if request.user and request.user.is_authenticated else None
+
+    AnalyticsEvent.objects.create(
+        session    = session,
+        user       = user,
+        event_type = event_type,
+        page       = data.get('page', ''),
+        properties = data.get('properties', {}),
+    )
+
+    if event_type == 'page_view':
+        AnalyticsSession.objects.filter(session_id=session_id).update(
+            page_views=session.page_views + 1,
+        )
+
+    if event_type == 'purchase' and user and not session.user:
+        session.user = user
+        session.save(update_fields=['user'])
+
+    return Response({'ok': True})
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_analytics_overview(request):
+    """Vue d'ensemble analytics — tableau de bord admin. ?days=30"""
+    days  = min(int(request.GET.get('days', 30)), 365)
+    since = timezone.now() - datetime.timedelta(days=days)
+
+    sessions = AnalyticsSession.objects.filter(created_at__gte=since)
+    events   = AnalyticsEvent.objects.filter(timestamp__gte=since)
+
+    # KPIs
+    total_sessions   = sessions.count()
+    total_page_views = sessions.aggregate(pv=Sum('page_views'))['pv'] or 0
+    total_purchases  = events.filter(event_type='purchase').count()
+    conversion_rate  = round(total_purchases / total_sessions * 100, 2) if total_sessions else 0
+    avg_pages        = round(total_page_views / total_sessions, 1) if total_sessions else 0
+
+    # Sources de trafic
+    raw_sources = sessions.values('utm_source', 'referrer_domain').annotate(n=Count('id'))
+    source_map  = {}
+    for row in raw_sources:
+        src = row['utm_source'] or row['referrer_domain'] or 'direct'
+        source_map[src] = source_map.get(src, 0) + row['n']
+    traffic_sources = sorted(
+        [{'source': k, 'sessions': v} for k, v in source_map.items()],
+        key=lambda x: -x['sessions']
+    )[:10]
+
+    # Funnel de conversion (sessions uniques par étape)
+    funnel = {
+        et: events.filter(event_type=et).values('session_id').distinct().count()
+        for et in ['view_product', 'add_to_cart', 'begin_checkout', 'purchase']
+    }
+
+    # Top pages
+    top_pages = list(
+        events.filter(event_type='page_view', page__gt='')
+        .values('page').annotate(views=Count('id')).order_by('-views')[:10]
+    )
+
+    # Sessions par jour
+    daily_data = [
+        {'date': str(r['date']), 'sessions': r['sessions'], 'page_views': r['page_views'] or 0}
+        for r in sessions.annotate(date=TruncDate('created_at'))
+        .values('date').annotate(sessions=Count('id'), page_views=Sum('page_views')).order_by('date')
+    ]
+
+    # Appareils
+    devices = {r['device_type']: r['n'] for r in sessions.values('device_type').annotate(n=Count('id'))}
+
+    # Campagnes UTM
+    camp_sessions = sessions.filter(utm_campaign__gt='')
+    campaigns_raw = camp_sessions.values('utm_campaign', 'utm_source', 'utm_medium').annotate(sessions=Count('id')).order_by('-sessions')[:20]
+
+    # Achats par campagne
+    purchases_by_camp = {}
+    for ev in events.filter(event_type='purchase').select_related('session'):
+        camp = ev.session.utm_campaign
+        if camp:
+            purchases_by_camp[camp] = purchases_by_camp.get(camp, 0) + 1
+
+    campaigns_data = [
+        {
+            'campaign':  r['utm_campaign'],
+            'source':    r['utm_source'],
+            'medium':    r['utm_medium'],
+            'sessions':  r['sessions'],
+            'purchases': purchases_by_camp.get(r['utm_campaign'], 0),
+        }
+        for r in campaigns_raw
+    ]
+
+    # Événements récents
+    recent_events = list(
+        events.select_related('session').values(
+            'event_type', 'page', 'timestamp',
+            'session__utm_source', 'session__device_type', 'session__referrer_domain',
+        ).order_by('-timestamp')[:60]
+    )
+
+    return Response({
+        'period_days': days,
+        'overview': {
+            'total_sessions':   total_sessions,
+            'total_page_views': total_page_views,
+            'total_purchases':  total_purchases,
+            'conversion_rate':  conversion_rate,
+            'avg_pages':        avg_pages,
+        },
+        'traffic_sources': traffic_sources,
+        'funnel':          funnel,
+        'top_pages':       top_pages,
+        'daily_data':      daily_data,
+        'devices':         devices,
+        'campaigns':       campaigns_data,
+        'recent_events':   recent_events,
+    })
 
 # ─── Promo Apply (public — utilise par le checkout) ───────────────────────────
 

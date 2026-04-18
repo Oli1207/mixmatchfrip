@@ -250,3 +250,23 @@
   .livraison-steps { grid-template-columns: 1fr; }
   .livraison-option { flex-direction: column; gap: 10px; }
 }
+
+@media (max-width: 480px) {
+  .livraison-header        { padding: 32px 14px; }
+  .livraison-header__title { font-size: 24px; }
+  .livraison-header__sub   { font-size: 13px; }
+  .livraison-section       { padding: 32px 14px; }
+  .livraison-section__title { font-size: 20px; }
+  /* Étapes numérotées */
+  .livraison-step          { flex-direction: row; align-items: flex-start; gap: 14px; text-align: left; }
+  .livraison-step__num     { width: 36px; height: 36px; font-size: 13px; flex-shrink: 0; }
+  .livraison-step__title   { font-size: 14px; }
+  .livraison-step__desc    { font-size: 12px; }
+  /* Tableau livraison : scroll horizontal */
+  .livraison-table-wrap    { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .livraison-table         { min-width: 480px; font-size: 12px; }
+  /* Options livraison */
+  .livraison-option        { padding: 16px; }
+  .livraison-option__title { font-size: 15px; }
+  .livraison-option__price { font-size: 18px; }
+}

@@ -6,6 +6,7 @@ import useAuthStore from '../../store/auth'
 import { ordersAPI, shippingAPI, getLocalCartId, userAPI } from '../../utils/api'
 import apiInstance from '../../utils/axios'
 import { formatPrice } from '../../utils/currency'
+import { events as analyticsEvents } from '../../analytics/analytics'
 import './CheckoutScreen.css'
 
 const STEPS = ['Livraison', 'Paiement', 'Confirmation']
@@ -447,6 +448,13 @@ export default function CheckoutScreen() {
     instructions: '',
   })
 
+  // Track begin_checkout once cart is loaded
+  useEffect(() => {
+    if (cart) {
+      analyticsEvents.beginCheckout(cart.total, cart.item_count)
+    }
+  }, [!!cart]) // eslint-disable-line react-hooks/exhaustive_deps
+
   useEffect(() => {
     fetchCart()
     // Pré-remplir le formulaire avec les données du compte connecté
@@ -546,6 +554,7 @@ export default function CheckoutScreen() {
         phone:     form.phone,
       }).catch(() => {})
     }
+    analyticsEvents.checkoutStep(1, 'paiement')
     setStep(1)
   }
 

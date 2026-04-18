@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiPackage, FiZap, FiMapPin } from 'react-icons/fi'
 import './LivraisonScreen.css'
+import SEOHead from '../../components/SEOHead'
 
 const ZONES = [
   { province: 'Québec',              standard: '5-7 jours',   express: '2-3 jours', standardPrice: 'Gratuit (>75$) / 4.99$ CAD', expressPrice: '12.99$ CAD' },
@@ -20,6 +21,11 @@ const STEPS = [
 export default function LivraisonScreen() {
   return (
     <div className="livraison-page">
+      <SEOHead
+        title="Livraison & Retours"
+        description="Informations sur la livraison MixMatchFrip : délais, tarifs par province, politique de retour sous 48h. Livraison standard et express partout au Canada."
+        url="/livraison"
+      />
       <div className="livraison-header">
         <div className="livraison-header__inner">
           <p className="livraison-header__tag">Informations</p>
@@ -122,7 +128,7 @@ export default function LivraisonScreen() {
                 <li>Retour gratuit pour tout article non conforme à la description</li>
               </ul>
               <p className="livraison-returns__note">
-                Pour initier un retour, contactez-nous à <a href="mailto:contact@mixmatchfrip.ca">contact@mixmatchfrip.ca</a> avec votre numéro de commande.
+                Pour initier un retour, contactez-nous à <a href="mailto:support@mixmatchfrip.com">support@mixmatchfrip.com</a> avec votre numéro de commande.
               </p>
             </div>
             <div className="livraison-returns__cta">

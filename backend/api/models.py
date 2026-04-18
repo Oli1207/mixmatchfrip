@@ -358,3 +358,89 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.qty}x {self.product_name}"
+
+
+# ─── Analytics ────────────────────────────────────────────────────────────────
+
+class AnalyticsSession(models.Model):
+    DEVICE_CHOICES = [
+        ('mobile',  'Mobile'),
+        ('tablet',  'Tablette'),
+        ('desktop', 'Ordinateur'),
+        ('unknown', 'Inconnu'),
+    ]
+
+    session_id      = models.CharField(max_length=64, unique=True, db_index=True)
+    user            = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='analytics_sessions'
+    )
+
+    # ── Origine du trafic ────────────────────────────────────────────────────
+    utm_source      = models.CharField(max_length=200, blank=True, db_index=True)
+    utm_medium      = models.CharField(max_length=200, blank=True)
+    utm_campaign    = models.CharField(max_length=200, blank=True, db_index=True)
+    utm_content     = models.CharField(max_length=200, blank=True)
+    utm_term        = models.CharField(max_length=200, blank=True)
+    referrer        = models.TextField(blank=True)
+    referrer_domain = models.CharField(max_length=255, blank=True, db_index=True)
+    landing_page    = models.CharField(max_length=500, blank=True)
+
+    # ── Appareil ──────────────────────────────────────────────────────────────
+    device_type     = models.CharField(max_length=20, choices=DEVICE_CHOICES, default='unknown')
+    user_agent      = models.TextField(blank=True)
+
+    # ── Métriques ─────────────────────────────────────────────────────────────
+    page_views      = models.PositiveIntegerField(default=0)
+
+    created_at      = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at      = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes  = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['utm_source', 'utm_campaign']),
+        ]
+
+    def __str__(self):
+        src = self.utm_source or self.referrer_domain or 'direct'
+        return f"Session {self.session_id[:8]}… ({src})"
+
+
+class AnalyticsEvent(models.Model):
+    EVENT_CHOICES = [
+        ('page_view',        'Vue de page'),
+        ('view_product',     'Vue produit'),
+        ('add_to_cart',      'Ajout panier'),
+        ('remove_from_cart', 'Retrait panier'),
+        ('add_to_wishlist',  'Ajout wishlist'),
+        ('begin_checkout',   'Début checkout'),
+        ('checkout_step',    'Étape checkout'),
+        ('purchase',         'Achat'),
+        ('search',           'Recherche'),
+        ('newsletter_sub',   'Inscription newsletter'),
+    ]
+
+    session     = models.ForeignKey(
+        AnalyticsSession, on_delete=models.CASCADE,
+        related_name='events', db_index=True
+    )
+    user        = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
+    event_type  = models.CharField(max_length=50, choices=EVENT_CHOICES, db_index=True)
+    page        = models.CharField(max_length=500, blank=True)
+    properties  = models.JSONField(default=dict, blank=True)
+    timestamp   = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes  = [
+            models.Index(fields=['event_type', 'timestamp']),
+            models.Index(fields=['session', 'timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type} — {self.session.session_id[:8]}…"

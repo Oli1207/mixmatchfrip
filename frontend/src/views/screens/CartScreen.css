@@ -470,3 +470,27 @@
   }
   .cart-summary { padding: 18px; }
 }
+
+/* Fix touch target : qty buttons trop petits */
+.qty-btn {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+@media (max-width: 480px) {
+  .cart-header           { padding: 16px 12px; }
+  .cart-body             { padding: 16px 12px; }
+  .cart-header h1        { font-size: 20px; }
+  /* Item encore plus compact */
+  .cart-item             { padding: 12px; gap: 4px 10px; }
+  .cart-item__img-wrap   { width: 72px; height: 92px; }
+  .cart-item__name       { font-size: 12px; }
+  .cart-item__price      { font-size: 12px; }
+  .cart-item__sub-price  { font-size: 13px; }
+  /* Qty control */
+  .qty-btn               { min-width: 32px; min-height: 32px; }
+  .qty-val               { font-size: 13px; min-width: 24px; }
+  /* Summary */
+  .cart-summary          { padding: 14px; }
+  .cart-checkout-btn     { min-height: 50px; font-size: 13px; }
+}

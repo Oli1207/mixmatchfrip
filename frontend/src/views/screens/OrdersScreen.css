@@ -279,7 +279,26 @@
   font-weight: 600;
 }
 
+@media (max-width: 640px) {
+  .ord-page        { padding: 24px 14px; }
+  .ord-header h1   { font-size: 22px; }
+  .ord-card        { padding: 16px; }
+  .ord-address     { padding: 12px; }
+  .ord-item__img   { width: 48px; height: 60px; }
+  .ord-item__name  { font-size: 13px; }
+}
+
 @media (max-width: 480px) {
-  .ord-card__head { flex-direction: column; align-items: flex-start; }
+  .ord-page        { padding: 20px 12px; }
+  .ord-card__head  { flex-direction: column; align-items: flex-start; gap: 8px; }
   .ord-card__right { width: 100%; justify-content: space-between; }
+  .ord-card__num   { font-size: 14px; }
+  .ord-card__date  { font-size: 11px; }
+  .ord-summary__row { font-size: 12px; }
+  .ord-total-row   { font-size: 14px; }
+  .ord-item        { gap: 10px; }
+  .ord-item__img   { width: 44px; height: 56px; }
+  .ord-item__name  { font-size: 12px; }
+  .ord-item__price { font-size: 13px; }
+  .ord-status      { font-size: 10px; padding: 4px 10px; }
 }

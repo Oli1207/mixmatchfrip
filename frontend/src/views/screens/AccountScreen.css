@@ -350,8 +350,19 @@
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  .acc-wishlist-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
+  .acc-wishlist-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  .acc-page            { padding: 24px 12px; }
+  .acc-grid            { gap: 16px; }
+  .acc-card            { padding: 20px 16px; border-radius: 8px; }
+  .acc-card__head      { font-size: 13px; margin-bottom: 18px; }
+  .acc-input           { padding: 8px 12px; font-size: 13px; height: 44px; }
+  .acc-btn             { min-height: 46px; font-size: 13px; }
+  /* Wishlist */
+  .acc-wishlist-grid   { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .acc-wish-card__info { padding: 8px 8px 10px; }
+  .acc-wish-card__name { font-size: 12px; }
+  .acc-wish-card__price { font-size: 13px; }
 }

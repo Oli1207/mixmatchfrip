@@ -597,6 +597,26 @@
   .btn-dark-outline { width: 100%; justify-content: center; }
 }
 
+@media (max-width: 480px) {
+  .checkout-header       { padding: 14px 12px; }
+  .checkout-body         { padding: 20px 12px; }
+  /* Step indicator compact */
+  .step-indicator__circle { width: 28px; height: 28px; font-size: 11px; }
+  .step-indicator__line  { width: 20px; margin: 0 4px; }
+  /* Formulaire */
+  .input                 { padding: 10px 12px; font-size: 13px; height: 46px; }
+  select.input           { height: 46px; }
+  .form-label            { font-size: 11px; }
+  /* Boutons nav */
+  .checkout-nav__next    { min-height: 50px; font-size: 13px; }
+  .btn-dark-outline      { min-height: 46px; font-size: 13px; }
+  /* Pay button */
+  .pay-btn               { min-height: 52px; font-size: 14px; }
+  /* Order summary */
+  .order-summary         { padding: 16px; }
+  .order-summary__title  { font-size: 13px; }
+}
+
 /* ── Checkbox création de compte (invité) ── */
 .checkout-create-account {
   margin-top: 20px;

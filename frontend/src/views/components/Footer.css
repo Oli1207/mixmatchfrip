@@ -191,3 +191,23 @@
   .mmf-footer__container { padding: 0 16px; }
   .mmf-footer__bottom .mmf-footer__container { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
+
+@media (max-width: 480px) {
+  .mmf-footer__top       { padding: 36px 0 28px; }
+  .mmf-footer__container { padding: 0 14px; }
+  .mmf-footer__logo      { height: 40px; width: 40px; }
+  .mmf-footer__brand     { font-size: 14px; }
+  .mmf-footer__tagline   { font-size: 12px; }
+  /* Newsletter form empilé */
+  .mmf-footer__nl-form   { flex-direction: column; gap: 8px; }
+  .mmf-footer__nl-input  { width: 100%; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); height: 44px; }
+  .mmf-footer__nl-btn    { width: 100%; height: 44px; border-radius: 2px; justify-content: center; }
+  /* Links */
+  .mmf-footer__col-title { font-size: 11px; }
+  .mmf-footer__link      { font-size: 12px; }
+  /* Bottom */
+  .mmf-footer__bottom    { padding: 14px 0; }
+  .mmf-footer__copy      { font-size: 11px; }
+  .mmf-footer__socials   { gap: 12px; }
+  .mmf-footer__social    { width: 34px; height: 34px; font-size: 14px; }
+}

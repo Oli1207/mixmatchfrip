@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { FiFilter, FiX, FiChevronDown, FiChevronUp, FiSearch } from 'react-icons/fi'
 import { productsAPI, categoriesAPI } from '../../utils/api'
 import './CatalogueScreen.css'
+import SEOHead from '../../components/SEOHead'
 
 const SIZES = ['XS','S','M','L','XL','XXL','unique']
 const CONDITIONS = [
@@ -176,8 +177,25 @@ export default function CatalogueScreen() {
     </aside>
   )
 
+  const pageTitle = category
+    ? `${category.charAt(0).toUpperCase() + category.slice(1)} — Catalogue`
+    : 'Catalogue'
+  const pageDesc = `Parcourez notre sélection de vêtements seconde main${category ? ` — ${category}` : ''}. ${products.length} article${products.length > 1 ? 's' : ''} disponible${products.length > 1 ? 's' : ''}, livraison partout au Canada.`
+
   return (
     <div className="cat-page">
+      <SEOHead
+        title={pageTitle}
+        description={pageDesc}
+        url={`/catalogue${category ? `?category=${category}` : ''}`}
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${pageTitle} — MixMatchFrip`,
+          description: pageDesc,
+          url: `https://mixmatchfrip.com/catalogue`,
+        }}
+      />
       {/* Header */}
       <div className="cat-header">
         <div className="cat-header__inner">

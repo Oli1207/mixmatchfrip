@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { FiCheck, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { ordersAPI } from '../../utils/api'
+import { events as analyticsEvents } from '../../analytics/analytics'
 import './PaymentSuccessScreen.css'
 
 export default function PaymentSuccessScreen() {
@@ -24,6 +25,7 @@ export default function PaymentSuccessScreen() {
       .then(({ data }) => {
         setOrder(data)
         setStatus('success')
+        analyticsEvents.purchase(data.order_number, data.total, data.item_count ?? 1)
       })
       .catch(err => {
         const detail = err?.response?.data?.detail || 'Erreur lors de la vérification du paiement.'

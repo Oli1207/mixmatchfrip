@@ -699,3 +699,34 @@
   .hs-newsletter__form  { flex-direction: column; border: none; gap: 10px; }
   .hs-newsletter__input { border: 1px solid rgba(255,255,255,0.18); border-radius: 2px; }
 }
+
+@media (max-width: 480px) {
+  .hs-section              { padding: 36px 0; }
+  .hs-container            { padding: 0 14px; }
+  .hs-section-title        { font-size: 22px; }
+  .hs-section-link         { font-size: 12px; }
+  /* Hero */
+  .hs-hero__eyebrow        { font-size: 10px; }
+  .hs-hero__title          { font-size: clamp(28px, 8vw, 36px); }
+  .hs-hero__sub            { font-size: 13px; }
+  .hs-hero__right          { min-height: 240px; }
+  .hs-hero__actions a,
+  .hs-hero__actions button { min-height: 48px; font-size: 12px; width: 100%; justify-content: center; }
+  /* Products */
+  .hs-products__grid       { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  /* Cards */
+  .hs-card__name           { font-size: 13px; }
+  .hs-card__price          { font-size: 14px; }
+  /* Perks */
+  .hs-perk                 { padding: 20px 16px; }
+  .hs-perk__title          { font-size: 14px; }
+  /* Category pills */
+  .hs-cat-pill             { padding: 7px 12px; font-size: 12px; }
+  /* Instagram */
+  .hs-insta__grid          { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  /* Newsletter */
+  .hs-newsletter__input    { height: 48px; font-size: 13px; }
+  .hs-newsletter__submit   { height: 48px; font-size: 12px; }
+  /* Banner */
+  .hs-banner               { padding: 52px 0; }
+}
