@@ -3,12 +3,33 @@ from django.utils.html import format_html
 from .models import (
     Category, Subcategory, Product, ProductImage,
     Wishlist, Cart, CartItem,
-    Order, OrderItem, NewsletterSubscriber
+    Order, OrderItem, NewsletterSubscriber, PromoCode
 )
 
 
 
-admin.site.register(NewsletterSubscriber)
+@admin.register(NewsletterSubscriber)
+class NewsletterSubscriberAdmin(admin.ModelAdmin):
+    list_display    = ['email', 'first_name', 'source_badge', 'created_at']
+    list_filter     = ['source']
+    search_fields   = ['email', 'first_name']
+    readonly_fields = ['created_at']
+
+    def source_badge(self, obj):
+        styles = {
+            'popup_promo': ('🎁', '#7c3aed', '#f3eeff'),   # violet — popup promo
+            'footer':      ('📩', '#0369a1', '#e0f2fe'),   # bleu   — footer
+            'other':       ('·',  '#666',    '#f5f5f5'),   # gris   — autre
+        }
+        icon, color, bg = styles.get(obj.source, styles['other'])
+        label = obj.get_source_display()
+        return format_html(
+            '<span style="background:{};color:{};padding:3px 9px;border-radius:12px;'
+            'font-size:11px;font-weight:600;white-space:nowrap;">{} {}</span>',
+            bg, color, icon, label,
+        )
+    source_badge.short_description = 'Source'
+
 # ─── Category & Subcategory ───────────────────────────────────────────────────
 
 
@@ -202,6 +223,35 @@ class ProductAdmin(admin.ModelAdmin):
             bg, color, obj.get_condition_display()
         )
     condition_badge.short_description = 'Etat'
+
+
+# ─── PromoCode ───────────────────────────────────────────────────────────────
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display  = ['code', 'discount_type', 'discount_value', 'is_active',
+                     'first_order_only', 'used_count', 'usage_limit', 'expires_at']
+    list_filter   = ['is_active', 'discount_type', 'first_order_only']
+    search_fields = ['code']
+    list_editable = ['is_active', 'first_order_only']
+    fieldsets = (
+        ('Code & Réduction', {
+            'fields': ('code', ('discount_type', 'discount_value'), 'is_active'),
+        }),
+        ('Restrictions', {
+            'fields': (
+                'first_order_only',
+                ('usage_limit', 'used_count'),
+                'minimum_amount',
+                'expires_at',
+            ),
+            'description': (
+                '<strong>Premier achat uniquement</strong> : si coché, le code est refusé '
+                'si l\'email a déjà une commande payée sur le site.'
+            ),
+        }),
+    )
+    readonly_fields = ['used_count']
 
 
 # ─── Wishlist ─────────────────────────────────────────────────────────────────

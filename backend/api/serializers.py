@@ -150,8 +150,8 @@ class PromoCodeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'code', 'discount_type', 'discount_value',
             'is_active', 'usage_limit', 'used_count',
-            'minimum_amount', 'expires_at', 'created_at',
-            'is_expired', 'is_maxed',
+            'minimum_amount', 'expires_at', 'first_order_only',
+            'created_at', 'is_expired', 'is_maxed',
         ]
 
     def get_is_expired(self, obj):

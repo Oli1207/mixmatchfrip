@@ -4,7 +4,7 @@ import { useAuthStore } from '../../store/auth'
 import { logout } from '../../utils/auth'
 import useCartStore from '../../store/cart'
 import { categoriesAPI } from '../../utils/api'
-import { FiSearch, FiShoppingBag, FiUser, FiX, FiMenu, FiChevronDown, FiTruck, FiStar, FiSettings } from 'react-icons/fi'
+import { FiSearch, FiShoppingBag, FiUser, FiX, FiMenu, FiChevronDown, FiTruck, FiStar, FiSettings, FiHeart } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
 import logo from '../../assets/logo.jpeg'
@@ -12,7 +12,9 @@ import './Navbar.css'
 
 export default function Navbar() {
   const { t } = useTranslation()
-  const [scrolled, setScrolled] = useState(false)
+  const [scrolled,     setScrolled]     = useState(false)
+  const [announceIdx,  setAnnounceIdx]  = useState(0)
+  const [announceFade, setAnnounceFade] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -30,6 +32,32 @@ export default function Navbar() {
   const navigate    = useNavigate()
   const location    = useLocation()
   const [categories, setCategories] = useState([])
+
+  // Announcement bar — 3 messages cycling every 4 s
+  const ANNOUNCES = [
+    { icon: <FiTruck  size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>, text: t('navbar.announce_shipping') },
+    { icon: <FiHeart  size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>, text: t('navbar.announce_frip') },
+    { icon: <FiStar   size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>, text: t('navbar.announce_new') },
+  ]
+  const announceCount = ANNOUNCES.length
+
+  // Fade-in initial message on mount
+  useEffect(() => {
+    const t0 = setTimeout(() => setAnnounceFade(true), 50)
+    return () => clearTimeout(t0)
+  }, [])
+
+  // Rotate every 4 s
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setAnnounceFade(false)
+      setTimeout(() => {
+        setAnnounceIdx(i => (i + 1) % announceCount)
+        setAnnounceFade(true)
+      }, 320)
+    }, 4000)
+    return () => clearInterval(iv)
+  }, [announceCount])
 
   useEffect(() => { fetchCart() }, [])
 
@@ -82,14 +110,11 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Announcement Bar */}
+      {/* Announcement Bar — rotating */}
       <div className="mmf-announce">
-        <span>
-          <FiTruck size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>
-          {t('navbar.announce_shipping')}
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          <FiStar size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>
-          {t('navbar.announce_new')}
+        <span className={`mmf-announce__msg${announceFade ? ' visible' : ''}`}>
+          {ANNOUNCES[announceIdx].icon}
+          {ANNOUNCES[announceIdx].text}
         </span>
       </div>
 

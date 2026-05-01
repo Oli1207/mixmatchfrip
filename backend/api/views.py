@@ -314,10 +314,11 @@ def order_create(request):
     # Appliquer le code promo si fourni
     promo_code_str  = request.data.get('promo_code', '').strip().upper()
     discount        = float(request.data.get('discount', 0))
+    order_email     = data['email']   # email saisi dans le formulaire de livraison
     if promo_code_str and discount == 0:
         try:
             promo = PromoCode.objects.get(code=promo_code_str)
-            valid, _ = promo.is_valid(subtotal)
+            valid, _ = promo.is_valid(subtotal, email=order_email)
             if valid:
                 discount = promo.compute_discount(subtotal)
         except PromoCode.DoesNotExist:
@@ -1472,13 +1473,19 @@ def promo_apply(request):
     """
     code     = request.data.get('code', '').strip().upper()
     subtotal = float(request.data.get('subtotal', 0))
+    # Email : utilisateur connecté en priorité, sinon champ fourni dans le body
+    email = (
+        request.user.email
+        if request.user.is_authenticated
+        else (request.data.get('email') or '').strip()
+    )
 
     try:
         promo = PromoCode.objects.get(code=code)
     except PromoCode.DoesNotExist:
         return Response({'detail': 'Code promo invalide.'}, status=status.HTTP_404_NOT_FOUND)
 
-    valid, msg = promo.is_valid(subtotal)
+    valid, msg = promo.is_valid(subtotal, email=email)
     if not valid:
         return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1587,18 +1594,36 @@ def admin_clients_list(request):
 @permission_classes([AllowAny])
 def newsletter_subscribe(request):
     """
-    Enregistre un email pour la newsletter.
-    Body: { email: str }
+    Enregistre un email (+ prénom optionnel) pour la newsletter.
+    Body: { email: str, first_name?: str }
     """
     from .models import NewsletterSubscriber
     import re
 
-    email = (request.data.get('email') or '').strip().lower()
+    email      = (request.data.get('email')      or '').strip().lower()
+    first_name = (request.data.get('first_name') or '').strip()
+    source     = (request.data.get('source')     or 'other').strip()
+
+    VALID_SOURCES = {'popup_promo', 'footer', 'other'}
+    if source not in VALID_SOURCES:
+        source = 'other'
+
     if not email or not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
         return Response({'detail': 'Adresse e-mail invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    _, created = NewsletterSubscriber.objects.get_or_create(email=email)
+    sub, created = NewsletterSubscriber.objects.get_or_create(email=email)
+    updated_fields = []
+    if first_name and not sub.first_name:
+        sub.first_name = first_name
+        updated_fields.append('first_name')
+    # Met à jour la source seulement si plus précise (popup > footer > other)
+    SOURCE_RANK = {'popup_promo': 2, 'footer': 1, 'other': 0}
+    if SOURCE_RANK.get(source, 0) > SOURCE_RANK.get(sub.source, 0):
+        sub.source = source
+        updated_fields.append('source')
+    if updated_fields:
+        sub.save(update_fields=updated_fields)
+
     if created:
         return Response({'detail': 'Inscription confirmée !'}, status=status.HTTP_201_CREATED)
-    # Already subscribed — treat as success so no info leakage
     return Response({'detail': 'Vous êtes déjà inscrit(e).'}, status=status.HTTP_200_OK)

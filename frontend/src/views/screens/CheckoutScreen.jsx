@@ -408,7 +408,9 @@ export default function CheckoutScreen() {
     setPromoError(null); setPromoLoading(true)
     try {
       const subtotal = parseFloat(cart?.subtotal || 0)
-      const { data } = await apiInstance.post('promo/apply/', { code, subtotal })
+      // On passe l'email pour permettre au backend de vérifier la restriction "premier achat"
+      const email = form.email?.trim() || ''
+      const { data } = await apiInstance.post('promo/apply/', { code, subtotal, email })
       setPromoCode(data.code); setDiscount(parseFloat(data.discount_amount))
     } catch (err) {
       const msg = err?.response?.data?.detail || err?.response?.data?.error || 'Code promo invalide ou expiré.'

@@ -30,7 +30,7 @@ export default function Footer() {
     }
     setLoading(true)
     try {
-      await apiInstance.post('newsletter/subscribe/', { email })
+      await apiInstance.post('newsletter/subscribe/', { email, source: 'footer' })
       Toast.fire({ icon: 'success', title: t('footer.toast_success') })
       setEmail('')
       setChecked(false)

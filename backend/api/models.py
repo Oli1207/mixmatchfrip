@@ -204,29 +204,41 @@ PROMO_TYPE_CHOICES = [
 ]
 
 class PromoCode(models.Model):
-    code           = models.CharField(max_length=50, unique=True)
-    discount_type  = models.CharField(max_length=10, choices=PROMO_TYPE_CHOICES, default='percent')
-    discount_value = models.DecimalField(max_digits=8, decimal_places=2, help_text='Valeur de la reduction (% ou $)')
-    is_active      = models.BooleanField(default=True)
-    usage_limit    = models.PositiveIntegerField(null=True, blank=True, help_text='Laisser vide = illimite')
-    used_count     = models.PositiveIntegerField(default=0)
-    minimum_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0, help_text='Montant minimum du panier')
-    expires_at     = models.DateTimeField(null=True, blank=True, help_text='Laisser vide = pas d\'expiration')
-    created_at     = models.DateTimeField(auto_now_add=True)
+    code             = models.CharField(max_length=50, unique=True)
+    discount_type    = models.CharField(max_length=10, choices=PROMO_TYPE_CHOICES, default='percent')
+    discount_value   = models.DecimalField(max_digits=8, decimal_places=2, help_text='Valeur de la reduction (% ou $)')
+    is_active        = models.BooleanField(default=True)
+    usage_limit      = models.PositiveIntegerField(null=True, blank=True, help_text='Laisser vide = illimite')
+    used_count       = models.PositiveIntegerField(default=0)
+    minimum_amount   = models.DecimalField(max_digits=8, decimal_places=2, default=0, help_text='Montant minimum du panier')
+    expires_at       = models.DateTimeField(null=True, blank=True, help_text='Laisser vide = pas d\'expiration')
+    first_order_only = models.BooleanField(
+        default=False,
+        verbose_name='Premier achat uniquement',
+        help_text='Si coché, le code est refusé si l\'email a déjà une commande payée.',
+    )
+    created_at       = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
 
-    def is_valid(self, cart_subtotal=0):
+    def is_valid(self, cart_subtotal=0, email=None):
         from django.utils import timezone
         if not self.is_active:
-            return False, 'Ce code promo est desactive.'
+            return False, 'Ce code promo est désactivé.'
         if self.usage_limit and self.used_count >= self.usage_limit:
-            return False, 'Ce code promo a atteint sa limite d\'utilisation.'
+            return False, "Ce code promo a atteint sa limite d'utilisation."
         if self.expires_at and self.expires_at < timezone.now():
-            return False, 'Ce code promo a expire.'
+            return False, 'Ce code promo a expiré.'
         if float(cart_subtotal) < float(self.minimum_amount):
             return False, f'Montant minimum requis : {self.minimum_amount} $'
+        # Restriction premier achat — vérifie l'historique de l'email
+        if self.first_order_only and email:
+            already_ordered = Order.objects.filter(
+                email__iexact=email.strip(), is_paid=True
+            ).exists()
+            if already_ordered:
+                return False, 'Ce code est réservé au premier achat.'
         return True, None
 
     def compute_discount(self, subtotal):
@@ -240,8 +252,19 @@ class PromoCode(models.Model):
 
 # ─── Newsletter ───────────────────────────────────────────────────────────────
 
+SOURCE_CHOICES = [
+    ('popup_promo', 'Popup bienvenue (code promo)'),
+    ('footer',      'Footer newsletter'),
+    ('other',       'Autre'),
+]
+
 class NewsletterSubscriber(models.Model):
     email      = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100, blank=True, verbose_name='Prénom')
+    source     = models.CharField(
+        max_length=20, choices=SOURCE_CHOICES, default='other',
+        verbose_name='Source d\'inscription',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

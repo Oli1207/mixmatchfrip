@@ -20,6 +20,7 @@
   "navbar": {
     "announce_shipping": "Livraison gratuite au Canada à partir de 75$ CAD",
     "announce_new": "Nouveautés chaque semaine",
+    "announce_frip": "Bienvenue à la friperie Mix&Match · Gatineau",
     "shop": "Boutique",
     "categories": "Catégories",
     "new_arrivals": "Nouveautés",
@@ -438,11 +439,12 @@
   "about": {
     "hero_tag": "Notre histoire",
     "hero_title": "La mode durable,\nsans compromis.",
-    "story_tag": "Qui sommes-nous",
-    "story_title": "Née d'une passion,\nportée par une mission",
-    "story_p1": "Mix&Match Frip a été fondée en 2021 à Gatineau avec une idée simple : rendre la mode secondaire aussi désirable que la mode neuve.",
-    "story_p2": "Nous sélectionnons à la main chaque pièce — robes, manteaux, bijoux, accessoires — pour construire une garde-robe curatée, moderne et éthique.",
-    "story_p3": "Parce que le plus beau vêtement est celui qui existe déjà.",
+    "story_tag": "Notre histoire",
+    "story_title": "Née d'un dressing qui déborde,\nportée par une conviction.",
+    "story_p1": "Mix&Match Frip est né d'un dressing qui déborde et d'un amour assumé pour les beaux vêtements, trop souvent donnés faute de place. Plutôt que de laisser ces pièces dormir ou disparaître, l'idée s'est imposée : créer une boutique en ligne de friperie pour femme afin d'offrir une seconde vie à chaque coup de cœur, et permettre à d'autres de profiter de ces trouvailles à petit prix.",
+    "story_p2": "Très vite, mon entourage s'est reconnu dans cette histoire : amies, collègues et famille ont commencé à me confier leurs propres vêtements, soigneusement choisis, pour qu'ils rejoignent la sélection. Chaque pièce est triée avec attention pour sa qualité, son style et son potentiel à s'associer avec le reste de la garde-robe, afin de créer un véritable jeu de mix & match entre les vêtements.",
+    "story_p3": "En choisissant la friperie, tu participes à une mode plus responsable : chaque vêtement revendu évite un déchet textile de plus et limite l'impact de la fast fashion sur l'environnement. Mix&Match Frip s'inscrit dans une démarche d'économie circulaire locale, où les gardes-robes des unes trouvent une nouvelle vie chez les autres, dans un esprit de partage, de valorisation et de sororité.",
+    "story_p4": "Ici, chaque commande compte : pour la planète, pour le portefeuille et pour la confiance en soi. L'objectif de Mix&Match est d'offrir aux femmes des pièces uniques, accessibles et faciles à porter, tout en prouvant qu'on peut s'amuser avec la mode sans surconsommer.",
     "story_cta": "Découvrir la boutique",
     "values_title": "Nos valeurs",
     "value1_title": "Mode circulaire",
@@ -605,6 +607,22 @@
     "see_faq": "Voir la FAQ",
     "days_one": "jour",
     "days_other": "jours"
+  },
+
+  "popup": {
+    "title": "15% de rabais\nsur ton premier achat",
+    "subtitle": "Inscris-toi pour recevoir les nouveautés et promos exclusives.",
+    "first_name_placeholder": "Prénom",
+    "email_placeholder": "Email",
+    "cta": "OBTENIR 15% DE RABAIS",
+    "legal": "En t'inscrivant, tu acceptes de recevoir nos offres et nouveautés. Désabonnement à tout moment.",
+    "success_title": "C'est parti ! 🎉",
+    "success_title_name": "c'est parti ! 🎉",
+    "success_text": "Ton code de bienvenue :",
+    "success_hint": "Utilise-le à l'étape du paiement — valable sur ta première commande.",
+    "success_cta": "Découvrir la boutique",
+    "error_email": "Adresse e-mail invalide.",
+    "close": "Fermer"
   },
 
   "policy": {

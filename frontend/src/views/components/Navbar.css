@@ -9,6 +9,24 @@
   font-size: 12px;
   font-family: var(--font-sans);
   letter-spacing: 0.5px;
+  overflow: hidden;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mmf-announce__msg {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.mmf-announce__msg.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* =============================================

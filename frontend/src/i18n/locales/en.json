@@ -20,6 +20,7 @@
   "navbar": {
     "announce_shipping": "Free shipping in Canada on orders over $75 CAD",
     "announce_new": "New items every week",
+    "announce_frip": "Welcome to Mix&Match Frip thrift boutique · Gatineau",
     "shop": "Shop",
     "categories": "Categories",
     "new_arrivals": "New Arrivals",
@@ -404,11 +405,12 @@
   "about": {
     "hero_tag": "Our story",
     "hero_title": "Sustainable fashion,\nno compromises.",
-    "story_tag": "Who we are",
-    "story_title": "Born from passion,\ndriven by a mission",
-    "story_p1": "Mix&Match Frip was founded in 2021 in Gatineau with a simple idea: make pre-owned fashion as desirable as new.",
-    "story_p2": "We hand-pick every piece — dresses, coats, jewellery, accessories — to build a curated, modern and ethical wardrobe.",
-    "story_p3": "Because the most beautiful garment is the one that already exists.",
+    "story_tag": "Our story",
+    "story_title": "Born from an overflowing wardrobe,\ndriven by a conviction.",
+    "story_p1": "Mix&Match Frip was born from an overflowing wardrobe and an unapologetic love for beautiful clothes — too often given away simply for lack of space. Rather than letting these pieces collect dust or disappear, the idea took shape: create an online pre-owned women's boutique to give a second life to every favourite find, and let others enjoy these treasures at a great price.",
+    "story_p2": "Very quickly, my circle saw themselves in this story: friends, colleagues and family started entrusting me with their own carefully chosen pieces to join the selection. Each item is hand-picked for its quality, style and ability to pair with the rest of a wardrobe — to create a true mix & match game between garments.",
+    "story_p3": "By choosing pre-owned, you take part in a more responsible approach to fashion: every resold garment avoids another textile waste and limits the impact of fast fashion on the environment. Mix&Match Frip is rooted in a local circular economy, where one person's wardrobe finds a new life with another, in a spirit of sharing, empowerment and sisterhood.",
+    "story_p4": "Here, every order matters: for the planet, for your wallet and for your confidence. Mix&Match's goal is to offer women unique, accessible and easy-to-wear pieces — while proving that fashion can be fun without overconsumption.",
     "story_cta": "Discover the shop",
     "values_title": "Our values",
     "value1_title": "Circular fashion",
@@ -571,6 +573,22 @@
     "see_faq": "View the FAQ",
     "days_one": "day",
     "days_other": "days"
+  },
+
+  "popup": {
+    "title": "15% off\nyour first order",
+    "subtitle": "Sign up to receive new arrivals and exclusive deals.",
+    "first_name_placeholder": "First name",
+    "email_placeholder": "Email",
+    "cta": "GET 15% OFF",
+    "legal": "By signing up, you agree to receive our offers and news. Unsubscribe anytime.",
+    "success_title": "You're in! 🎉",
+    "success_title_name": "you're in! 🎉",
+    "success_text": "Your welcome code:",
+    "success_hint": "Use it at checkout — valid on your first order.",
+    "success_cta": "Discover the shop",
+    "error_email": "Invalid email address.",
+    "close": "Close"
   },
 
   "policy": {

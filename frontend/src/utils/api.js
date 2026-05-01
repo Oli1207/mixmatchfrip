@@ -58,6 +58,15 @@ export const ordersAPI = {
 
 // ─── Shipping ─────────────────────────────────────────────────────────────────
 
+// ─── Newsletter ───────────────────────────────────────────────────────────────
+
+export const newsletterAPI = {
+  subscribe: (email, firstName = '', source = 'other') =>
+    apiInstance.post('newsletter/subscribe/', { email, first_name: firstName, source }),
+}
+
+// ─── Shipping ─────────────────────────────────────────────────────────────────
+
 export const shippingAPI = {
   getRates: (postalCode, weightG = 500, cartValue = null) =>
     apiInstance.post('shipping/rates/', {

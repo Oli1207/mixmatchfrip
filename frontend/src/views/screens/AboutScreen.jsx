@@ -73,6 +73,7 @@ export default function AboutScreen() {
             <p>{t('about.story_p1')}</p>
             <p>{t('about.story_p2')}</p>
             <p>{t('about.story_p3')}</p>
+            <p>{t('about.story_p4')}</p>
             <Link to="/catalogue" className="btn-gold">{t('about.story_cta')}</Link>
           </div>
         </div>

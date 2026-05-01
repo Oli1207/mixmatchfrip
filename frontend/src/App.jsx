@@ -44,11 +44,13 @@ import OrdersScreen     from './views/screens/OrdersScreen'
 import AnalyticsAdmin   from './views/admin/AnalyticsAdmin'
 
 import AnalyticsProvider from './analytics/AnalyticsProvider'
+import WelcomePopup from './views/components/WelcomePopup'
 
 // Wrapper boutique publique (Navbar + Footer autour des routes enfants)
 function PublicLayout() {
   return (
     <MainWrapper>
+      <WelcomePopup />
       <Navbar />
       <Outlet />
       <Footer />
