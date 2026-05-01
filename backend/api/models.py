@@ -9,9 +9,10 @@ User = settings.AUTH_USER_MODEL
 # ─── Category ────────────────────────────────────────────────────────────────
 
 class Category(models.Model):
-    name  = models.CharField(max_length=100)
-    slug  = models.SlugField(unique=True, blank=True)
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    name    = models.CharField(max_length=100, verbose_name='Nom (FR)')
+    name_en = models.CharField(max_length=100, blank=True, verbose_name='Name (EN)')
+    slug    = models.SlugField(unique=True, blank=True)
+    image   = models.ImageField(upload_to='categories/', blank=True, null=True)
 
     class Meta:
         verbose_name_plural = 'Categories'
@@ -30,7 +31,8 @@ class Category(models.Model):
 
 class Subcategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
-    name     = models.CharField(max_length=100)
+    name     = models.CharField(max_length=100, verbose_name='Nom (FR)')
+    name_en  = models.CharField(max_length=100, blank=True, verbose_name='Name (EN)')
     slug     = models.SlugField(unique=True, blank=True)
 
     class Meta:
@@ -74,7 +76,8 @@ class Product(models.Model):
     # ── Identification ────────────────────────────────────────────────────────
     category       = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
     subcategory    = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
-    name           = models.CharField(max_length=200)
+    name           = models.CharField(max_length=200, verbose_name='Nom (FR)')
+    name_en        = models.CharField(max_length=200, blank=True, verbose_name='Name (EN)')
     brand          = models.CharField(max_length=100, blank=True)
     slug           = models.SlugField(unique=True, blank=True, max_length=250)
 
@@ -88,9 +91,10 @@ class Product(models.Model):
     original_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
 
     # ── Taille ───────────────────────────────────────────────────────────────
-    size               = models.CharField(max_length=10, choices=SIZE_CHOICES, help_text='Taille standard (pour les filtres)')
-    size_tag           = models.CharField(max_length=20, blank=True, help_text='Taille indiquee sur l\'etiquette (ex: 10, L/G, 8P)')
-    size_recommendation = models.CharField(max_length=200, blank=True, help_text='Ex: Convient a un 8 ajuste')
+    size                   = models.CharField(max_length=10, choices=SIZE_CHOICES, help_text='Taille standard (pour les filtres)')
+    size_tag               = models.CharField(max_length=20, blank=True, help_text='Taille indiquee sur l\'etiquette (ex: 10, L/G, 8P)')
+    size_recommendation    = models.CharField(max_length=200, blank=True, verbose_name='Recommandation taille (FR)', help_text='Ex: Convient a un 8 ajuste')
+    size_recommendation_en = models.CharField(max_length=200, blank=True, verbose_name='Size recommendation (EN)', help_text='Ex: Fits a size 8 slim')
 
     # ── Mesures a plat (cm) ───────────────────────────────────────────────────
     measure_shoulder = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True, verbose_name='Epaule a epaule (cm)')
@@ -101,18 +105,27 @@ class Product(models.Model):
     measure_sleeve   = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True, verbose_name='Longueur des manches (cm)')
 
     # ── Matiere & Details ─────────────────────────────────────────────────────
-    material       = models.TextField(blank=True, verbose_name='Matiere', help_text='Ex: Crepe de polyester, legèrement extensible')
-    details        = models.TextField(blank=True, verbose_name='Details de coupe', help_text='Ex: Coupe fourreau, fermeture eclair invisible au dos, entierement doublee')
+    material       = models.TextField(blank=True, verbose_name='Matière (FR)', help_text='Ex: Crêpe de polyester, légèrement extensible')
+    material_en    = models.TextField(blank=True, verbose_name='Material (EN)', help_text='Ex: Polyester crepe, slightly stretchy')
+    details        = models.TextField(blank=True, verbose_name='Détails de coupe (FR)', help_text='Ex: Coupe fourreau, fermeture éclair invisible au dos')
+    details_en     = models.TextField(blank=True, verbose_name='Cut details (EN)', help_text='Ex: Sheath cut, invisible back zip, fully lined')
     color          = models.JSONField(default=list, blank=True, help_text='Palette de couleurs (codes hex)')
 
     # ── Contenu marketing ────────────────────────────────────────────────────
-    bullet_1       = models.TextField(blank=True, verbose_name='Argument 1', help_text='Premier argument de vente (accroche principale)')
-    bullet_2       = models.TextField(blank=True, verbose_name='Argument 2')
-    bullet_3       = models.TextField(blank=True, verbose_name='Argument 3')
-    bullet_4       = models.TextField(blank=True, verbose_name='Argument 4')
-    description    = models.TextField(blank=True, verbose_name='Description produit', help_text='Texte long de presentation')
-    mix_match_tips = models.TextField(blank=True, verbose_name='Idees Mix & Match', help_text='3 idees de tenues (une par ligne)')
-    expert_tip     = models.TextField(blank=True, verbose_name='Conseil d\'expert')
+    bullet_1          = models.TextField(blank=True, verbose_name='Argument 1 (FR)')
+    bullet_1_en       = models.TextField(blank=True, verbose_name='Argument 1 (EN)')
+    bullet_2          = models.TextField(blank=True, verbose_name='Argument 2 (FR)')
+    bullet_2_en       = models.TextField(blank=True, verbose_name='Argument 2 (EN)')
+    bullet_3          = models.TextField(blank=True, verbose_name='Argument 3 (FR)')
+    bullet_3_en       = models.TextField(blank=True, verbose_name='Argument 3 (EN)')
+    bullet_4          = models.TextField(blank=True, verbose_name='Argument 4 (FR)')
+    bullet_4_en       = models.TextField(blank=True, verbose_name='Argument 4 (EN)')
+    description       = models.TextField(blank=True, verbose_name='Description (FR)')
+    description_en    = models.TextField(blank=True, verbose_name='Description (EN)')
+    mix_match_tips    = models.TextField(blank=True, verbose_name='Mix & Match (FR)', help_text='3 idées de tenues (une par ligne)')
+    mix_match_tips_en = models.TextField(blank=True, verbose_name='Mix & Match (EN)', help_text='3 outfit ideas (one per line)')
+    expert_tip        = models.TextField(blank=True, verbose_name='Conseil expert (FR)')
+    expert_tip_en     = models.TextField(blank=True, verbose_name='Expert tip (EN)')
 
     # ── Logistique ────────────────────────────────────────────────────────────
     weight_g       = models.PositiveIntegerField(default=400, help_text='Poids en grammes (frais de port)')

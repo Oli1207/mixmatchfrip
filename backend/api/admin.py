@@ -16,26 +16,38 @@ admin.site.register(NewsletterSubscriber)
 class SubcategoryInline(admin.TabularInline):
     model  = Subcategory
     extra  = 2
-    fields = ['name', 'slug']
+    fields = ['name', 'name_en', 'slug']
     prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display        = ['name', 'slug', 'subcategory_count']
+    list_display        = ['name', 'name_en', 'slug', 'subcategory_count']
     prepopulated_fields = {'slug': ('name',)}
     inlines             = [SubcategoryInline]
+    fieldsets = (
+        ('Nom de la catégorie', {
+            'fields': (('name', 'name_en'), 'slug', 'image'),
+            'description': '🇫🇷 Nom (FR) — obligatoire &nbsp;&nbsp;|&nbsp;&nbsp; 🇬🇧 Name (EN) — optionnel, affiché en anglais',
+        }),
+    )
 
     def subcategory_count(self, obj):
         return obj.subcategories.count()
-    subcategory_count.short_description = 'Sous-categories'
+    subcategory_count.short_description = 'Sous-catégories'
 
 
 @admin.register(Subcategory)
 class SubcategoryAdmin(admin.ModelAdmin):
-    list_display        = ['name', 'category', 'slug']
+    list_display        = ['name', 'name_en', 'category', 'slug']
     list_filter         = ['category']
     prepopulated_fields = {'slug': ('name',)}
+    fieldsets = (
+        ('Nom de la sous-catégorie', {
+            'fields': ('category', ('name', 'name_en'), 'slug'),
+            'description': '🇫🇷 Nom (FR) — obligatoire &nbsp;&nbsp;|&nbsp;&nbsp; 🇬🇧 Name (EN) — optionnel',
+        }),
+    )
 
 
 # ─── Product ─────────────────────────────────────────────────────────────────
@@ -63,103 +75,117 @@ class ProductAdmin(admin.ModelAdmin):
     inlines        = [ProductImageInline]
 
     fieldsets = (
-        # ── 1. Identification ────────────────────────────────────────────────
+        # ── 1. Identification ─────────────────────────────────────────────────
         ('Identification', {
             'fields': (
                 ('category', 'subcategory'),
-                'name',
+                ('name', 'name_en'),
                 'brand',
                 'slug',
             ),
+            'description': '🇫🇷 Champs FR — obligatoires &nbsp;|&nbsp; 🇬🇧 Champs EN — optionnels (laissez vide = même que le FR)',
         }),
 
-        # ── 2. Etat & Disponibilite ───────────────────────────────────────────
-        ('Etat & Disponibilite', {
+        # ── 2. État & Disponibilité ───────────────────────────────────────────
+        ('État & Disponibilité', {
             'fields': (
                 'condition',
                 ('stock', 'is_available'),
             ),
         }),
 
-        # ── 3. Prix ──────────────────────────────────────────────────────────
+        # ── 3. Prix ───────────────────────────────────────────────────────────
         ('Prix', {
-            'fields': (
-                ('price', 'original_price'),
-            ),
-            'description': 'Le pourcentage de reduction sera calcule automatiquement si vous renseignez les deux prix.',
+            'fields': (('price', 'original_price'),),
+            'description': 'La réduction sera calculée automatiquement si les deux prix sont renseignés.',
         }),
 
-        # ── 4. Taille ────────────────────────────────────────────────────────
+        # ── 4. Taille ─────────────────────────────────────────────────────────
         ('Taille', {
             'fields': (
                 'size',
                 'size_tag',
-                'size_recommendation',
+                ('size_recommendation', 'size_recommendation_en'),
             ),
             'description': (
-                'Taille standard = pour les filtres du catalogue. '
-                'Taille indiquee = ce qui est ecrit sur l\'etiquette (ex: 10, L/G, 8P). '
-                'Taille recommandee = votre conseil client (ex: Convient a un 8 ajuste).'
+                '<strong>Taille standard</strong> : pour les filtres du catalogue. '
+                '<strong>Taille indiquée</strong> : ce qui est écrit sur l\'étiquette (ex: 10, L/G, 8P). '
+                '<strong>Recommandation (FR/EN)</strong> : votre conseil client — ex: Convient à un 8 ajusté / Fits a slim size 8.'
             ),
         }),
 
-        # ── 5. Mesures a plat ────────────────────────────────────────────────
-        ('Mesures a plat (en cm)', {
+        # ── 5. Mesures à plat ─────────────────────────────────────────────────
+        ('Mesures à plat (cm) — pas de traduction nécessaire', {
             'fields': (
                 ('measure_shoulder', 'measure_chest'),
                 ('measure_waist', 'measure_hips'),
                 ('measure_length', 'measure_sleeve'),
             ),
-            'description': 'Toutes les mesures sont prises a plat, en centimetres. Laissez vide si non applicable.',
+            'description': 'Toutes les mesures sont prises à plat, en centimètres. Laissez vide si non applicable.',
             'classes': ('collapse',),
         }),
 
-        # ── 6. Matiere & Details ─────────────────────────────────────────────
-        ('Matiere & Details de coupe', {
+        # ── 6. Matière & Détails ──────────────────────────────────────────────
+        ('Matière & Détails de coupe', {
             'fields': (
                 'material',
+                'material_en',
                 'details',
+                'details_en',
                 'color',
             ),
             'description': (
-                'Matiere : decrivez le tissu (ex: Crepe de polyester, legèrement extensible, entierement doublee). '
-                'Details : decollete, coupe, fermeture, doublure, etc. '
-                'Couleurs : entrez les codes hex en JSON, ex: ["#FF0000", "#000000"]'
+                '🇫🇷 <strong>Matière (FR)</strong> : ex: Crêpe de polyester, légèrement extensible, entièrement doublée. '
+                '🇬🇧 <strong>Material (EN)</strong> : ex: Polyester crepe, slightly stretchy, fully lined. '
+                '<br>Couleurs : codes hex en JSON, ex: ["#FF0000", "#000000"]'
             ),
         }),
 
-        # ── 7. Contenu marketing ─────────────────────────────────────────────
-        ('Arguments de vente (affiches pres du prix)', {
+        # ── 7. Arguments de vente ─────────────────────────────────────────────
+        ('Arguments de vente (affichés près du prix)', {
             'fields': (
-                'bullet_1',
-                'bullet_2',
-                'bullet_3',
-                'bullet_4',
+                ('bullet_1', 'bullet_1_en'),
+                ('bullet_2', 'bullet_2_en'),
+                ('bullet_3', 'bullet_3_en'),
+                ('bullet_4', 'bullet_4_en'),
             ),
             'description': (
-                'Ces 4 arguments courts seront affiches en gras pres du prix et des photos. '
-                'Exemple : "La couleur qui donne confiance : rouge vibrant, coupe impeccable, assurance garantie."'
+                'Chaque ligne = un argument court. 🇫🇷 à gauche, 🇬🇧 à droite. '
+                'Ex FR : "Coupe impeccable — rouge vibrant, assurance garantie." '
+                'Ex EN : "Impeccable cut — vibrant red, confidence guaranteed."'
             ),
         }),
 
-        ('Description & Conseils', {
+        # ── 8. Description & Conseils ─────────────────────────────────────────
+        ('Description complète', {
             'fields': (
                 'description',
-                'mix_match_tips',
-                'expert_tip',
+                'description_en',
             ),
-            'description': (
-                'Description : texte long de presentation de la piece. '
-                'Mix & Match : 3 idees de tenues (une par ligne, commencez chaque ligne par un tiret -). '
-                'Conseil expert : votre conseil personnalise pour porter cette piece.'
-            ),
+            'description': '🇫🇷 Texte long de présentation de la pièce — 🇬🇧 English version (optionnel).',
         }),
 
-        # ── 8. Logistique ────────────────────────────────────────────────────
+        ('Mix & Match', {
+            'fields': (
+                'mix_match_tips',
+                'mix_match_tips_en',
+            ),
+            'description': '3 idées de tenues, une par ligne. Commencez chaque ligne par un tiret -.',
+        }),
+
+        ('Conseil expert', {
+            'fields': (
+                'expert_tip',
+                'expert_tip_en',
+            ),
+            'description': 'Votre conseil personnalisé pour porter cette pièce / Your personal tip for wearing this piece.',
+        }),
+
+        # ── 9. Logistique ─────────────────────────────────────────────────────
         ('Logistique', {
             'fields': ('weight_g',),
             'classes': ('collapse',),
-            'description': 'Poids en grammes, utilise pour calculer les frais de port Canada Post.',
+            'description': 'Poids en grammes — utilisé pour calculer les frais de port Chit Chats.',
         }),
     )
 

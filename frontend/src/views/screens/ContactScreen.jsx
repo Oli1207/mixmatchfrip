@@ -1,43 +1,46 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiMail, FiInstagram, FiMapPin, FiSend, FiCheck } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import './ContactScreen.css'
 import SEOHead from '../../components/SEOHead'
 
-const CHANNELS = [
-  {
-    Icon: FiMail,
-    title: 'Email',
-    desc: 'Pour toute question sur vos commandes ou nos articles.',
-    value: 'support@mixmatchfrip.com',
-    href: 'mailto:support@mixmatchfrip.com',
-  },
-  {
-    Icon: FiInstagram,
-    title: 'Instagram',
-    desc: 'Suivez nos nouveautés et envoyez-nous un DM.',
-    value: '@mixmatch_frip',
-    href: 'https://www.instagram.com/mixmatch_frip',
-  },
-  {
-    Icon: FiMapPin,
-    title: 'Localisation',
-    desc: 'Boutique en ligne · Livraison partout au Canada.',
-    value: 'Montréal, Québec',
-    href: null,
-  },
-]
-
-const SUBJECTS = [
-  'Ma commande',
-  'Un article / retour',
-  'Mon compte',
-  'Vendre mes vêtements',
-  'Partenariat / presse',
-  'Autre',
-]
-
 export default function ContactScreen() {
+  const { t } = useTranslation()
+
+  const CHANNELS = [
+    {
+      Icon: FiMail,
+      title: t('contact.channel_email'),
+      desc: t('contact.email_desc_full'),
+      value: 'support@mixmatchfrip.com',
+      href: 'mailto:support@mixmatchfrip.com',
+    },
+    {
+      Icon: FiInstagram,
+      title: t('contact.channel_instagram'),
+      desc: t('contact.instagram_desc_full'),
+      value: '@mixmatch_frip',
+      href: 'https://www.instagram.com/mixmatch_frip',
+    },
+    {
+      Icon: FiMapPin,
+      title: t('contact.channel_location'),
+      desc: t('contact.location_desc_full'),
+      value: t('contact.location_value'),
+      href: null,
+    },
+  ]
+
+  const SUBJECTS = [
+    t('contact.subject_my_order'),
+    t('contact.subject_item_return'),
+    t('contact.subject_my_account'),
+    t('contact.subject_sell'),
+    t('contact.subject_press'),
+    t('contact.subject_other_item'),
+  ]
+
   const [form, setForm]       = useState({ name: '', email: '', subject: SUBJECTS[0], message: '' })
   const [sent, setSent]       = useState(false)
   const [loading, setLoading] = useState(false)
@@ -45,10 +48,10 @@ export default function ContactScreen() {
 
   const validate = () => {
     const e = {}
-    if (!form.name.trim())    e.name    = 'Votre nom est requis.'
-    if (!form.email.trim())   e.email   = 'Votre email est requis.'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Email invalide.'
-    if (!form.message.trim()) e.message = 'Votre message est requis.'
+    if (!form.name.trim())    e.name    = t('contact.validate_name')
+    if (!form.email.trim())   e.email   = t('contact.validate_email_required')
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = t('contact.validate_email_invalid')
+    if (!form.message.trim()) e.message = t('contact.validate_message')
     return e
   }
 
@@ -65,7 +68,7 @@ export default function ContactScreen() {
     setLoading(true)
     // Ouvre le client mail avec les infos pré-remplies
     const body = encodeURIComponent(
-      `Bonjour,\n\n${form.message}\n\n---\nNom : ${form.name}\nSujet : ${form.subject}`
+      `${form.message}\n\n---\n${form.name} / ${form.subject}`
     )
     window.location.href = `mailto:support@mixmatchfrip.com?subject=${encodeURIComponent(`[MixMatchFrip] ${form.subject}`)}&body=${body}`
     setTimeout(() => { setLoading(false); setSent(true) }, 600)
@@ -74,7 +77,7 @@ export default function ContactScreen() {
   return (
     <div className="contact-page">
       <SEOHead
-        title="Nous contacter"
+        title={t('contact.title')}
         description="Contactez l'équipe MixMatchFrip pour toute question sur vos commandes, un article ou un retour. Réponse sous 24h."
         url="/contact"
         schema={{
@@ -88,11 +91,9 @@ export default function ContactScreen() {
       {/* Header */}
       <div className="contact-header">
         <div className="contact-header__inner">
-          <p className="contact-header__tag">Support</p>
-          <h1 className="contact-header__title">Nous contacter</h1>
-          <p className="contact-header__sub">
-            Une question, un problème ou une suggestion ? On vous répond sous 24h.
-          </p>
+          <p className="contact-header__tag">{t('contact.support_tag')}</p>
+          <h1 className="contact-header__title">{t('contact.title')}</h1>
+          <p className="contact-header__sub">{t('contact.response_24h')}</p>
         </div>
       </div>
 
@@ -122,38 +123,36 @@ export default function ContactScreen() {
             {sent ? (
               <div className="contact-success">
                 <span className="contact-success__icon"><FiCheck size={28} /></span>
-                <h2 className="contact-success__title">Message préparé !</h2>
-                <p className="contact-success__text">
-                  Votre client mail s'est ouvert avec votre message. Envoyez-le et nous vous répondrons sous 24h.
-                </p>
+                <h2 className="contact-success__title">{t('contact.success_prepared')}</h2>
+                <p className="contact-success__text">{t('contact.success_mail_text')}</p>
                 <button className="contact-success__reset" onClick={() => { setSent(false); setForm({ name: '', email: '', subject: SUBJECTS[0], message: '' }) }}>
-                  Envoyer un autre message
+                  {t('contact.send_another')}
                 </button>
               </div>
             ) : (
               <form className="contact-form" onSubmit={handleSubmit} noValidate>
-                <h2 className="contact-form__title">Envoyer un message</h2>
+                <h2 className="contact-form__title">{t('contact.form_title')}</h2>
 
                 <div className="contact-form__row">
                   <div className="contact-form__group">
-                    <label className="contact-form__label">Votre nom</label>
+                    <label className="contact-form__label">{t('contact.field_name')}</label>
                     <input
                       className={`contact-form__input ${errors.name ? 'contact-form__input--err' : ''}`}
                       type="text"
                       name="name"
-                      placeholder="Marie Tremblay"
+                      placeholder={t('contact.name_placeholder')}
                       value={form.name}
                       onChange={handleChange}
                     />
                     {errors.name && <p className="contact-form__error">{errors.name}</p>}
                   </div>
                   <div className="contact-form__group">
-                    <label className="contact-form__label">Votre email</label>
+                    <label className="contact-form__label">{t('contact.field_email')}</label>
                     <input
                       className={`contact-form__input ${errors.email ? 'contact-form__input--err' : ''}`}
                       type="email"
                       name="email"
-                      placeholder="marie@email.com"
+                      placeholder={t('contact.email_placeholder')}
                       value={form.email}
                       onChange={handleChange}
                     />
@@ -162,19 +161,19 @@ export default function ContactScreen() {
                 </div>
 
                 <div className="contact-form__group">
-                  <label className="contact-form__label">Sujet</label>
+                  <label className="contact-form__label">{t('contact.field_subject')}</label>
                   <select className="contact-form__select" name="subject" value={form.subject} onChange={handleChange}>
                     {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
 
                 <div className="contact-form__group">
-                  <label className="contact-form__label">Message</label>
+                  <label className="contact-form__label">{t('contact.field_message')}</label>
                   <textarea
                     className={`contact-form__textarea ${errors.message ? 'contact-form__input--err' : ''}`}
                     name="message"
                     rows={5}
-                    placeholder="Décrivez votre question ou situation..."
+                    placeholder={t('contact.message_placeholder')}
                     value={form.message}
                     onChange={handleChange}
                   />
@@ -183,7 +182,7 @@ export default function ContactScreen() {
 
                 <button className="contact-form__btn" type="submit" disabled={loading}>
                   <FiSend size={15} />
-                  {loading ? 'Préparation...' : 'Envoyer le message'}
+                  {loading ? t('contact.preparing') : t('contact.send_btn')}
                 </button>
               </form>
             )}
@@ -194,10 +193,8 @@ export default function ContactScreen() {
 
       {/* FAQ CTA */}
       <div className="contact-faq-cta">
-        <p className="contact-faq-cta__text">
-          Vous cherchez une réponse rapide ?
-        </p>
-        <Link to="/faq" className="contact-faq-cta__link">Consulter la FAQ →</Link>
+        <p className="contact-faq-cta__text">{t('contact.faq_quick')}</p>
+        <Link to="/faq" className="contact-faq-cta__link">{t('contact.faq_cta_link')}</Link>
       </div>
 
     </div>

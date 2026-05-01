@@ -4,7 +4,7 @@ const SITE_NAME  = 'MixMatchFrip'
 const BASE_URL   = 'https://mixmatchfrip.com'
 const OG_IMAGE   = `${BASE_URL}/og-image.jpg`
 const TWITTER    = '@mixmatch_frip'
-const DEFAULT_DESC = 'Vêtements seconde main uniques, chinés avec soin à Montréal. Livraison partout au Canada. Trouvez la pièce rare qui révèle votre style.'
+const DEFAULT_DESC = 'Vêtements seconde main uniques, chinés avec soin à Gatineau. Livraison partout au Canada. Trouvez la pièce rare qui révèle votre style.'
 
 export default function SEOHead({
   title,
@@ -17,7 +17,7 @@ export default function SEOHead({
 }) {
   const fullTitle = title
     ? `${title} — ${SITE_NAME}`
-    : `${SITE_NAME} — Vêtements Seconde Main | Montréal`
+    : `${SITE_NAME} — Vêtements Seconde Main | Gatineau`
   const canonicalUrl = `${BASE_URL}${url}`
 
   return (
@@ -72,7 +72,7 @@ export const schemaOrganization = {
   description: DEFAULT_DESC,
   address: {
     '@type': 'PostalAddress',
-    addressLocality: 'Montréal',
+    addressLocality: 'Gatineau',
     addressRegion: 'QC',
     addressCountry: 'CA',
   },

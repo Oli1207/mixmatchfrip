@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SiInstagram, SiTiktok } from 'react-icons/si'
 import { FiMail, FiMapPin } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import apiInstance from '../../utils/axios'
 import Swal from 'sweetalert2'
 import logo from '../../assets/logo.jpeg'
@@ -16,6 +17,7 @@ const Toast = Swal.mixin({
 })
 
 export default function Footer() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [checked, setChecked] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -23,17 +25,17 @@ export default function Footer() {
   const handleNewsletter = async (e) => {
     e.preventDefault()
     if (!checked) {
-      Toast.fire({ icon: 'warning', title: 'Veuillez cocher la case pour continuer.' })
+      Toast.fire({ icon: 'warning', title: t('footer.toast_check') })
       return
     }
     setLoading(true)
     try {
       await apiInstance.post('newsletter/subscribe/', { email })
-      Toast.fire({ icon: 'success', title: 'Merci de votre inscription !' })
+      Toast.fire({ icon: 'success', title: t('footer.toast_success') })
       setEmail('')
       setChecked(false)
     } catch {
-      Toast.fire({ icon: 'error', title: 'Inscription échouée, réessayez.' })
+      Toast.fire({ icon: 'error', title: t('footer.toast_error') })
     } finally {
       setLoading(false)
     }
@@ -53,13 +55,15 @@ export default function Footer() {
                 <img src={logo} alt="Mix&Match Frip" className="mmf-footer__logo" />
               </Link>
               <p className="mmf-footer__tagline">
-                La mode seconde main,<br />première qualité.
+                {t('footer.tagline').split('\n').map((line, i) => (
+                  <span key={i}>{line}{i === 0 && <br />}</span>
+                ))}
               </p>
-              <p className="mmf-footer__newsletter-label">Recevez notre newsletter</p>
+              <p className="mmf-footer__newsletter-label">{t('footer.newsletter_label')}</p>
               <form className="mmf-footer__newsletter" onSubmit={handleNewsletter}>
                 <input
                   type="email"
-                  placeholder="Votre email"
+                  placeholder={t('footer.email_placeholder')}
                   className="mmf-footer__input"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -76,38 +80,38 @@ export default function Footer() {
                   onChange={e => setChecked(e.target.checked)}
                   className="mmf-footer__check"
                 />
-                <span>J'accepte de recevoir les offres exclusives</span>
+                <span>{t('footer.newsletter_consent')}</span>
               </label>
             </div>
 
             {/* Col 2 — Boutique */}
             <div className="mmf-footer__col">
-              <h5 className="mmf-footer__col-title">Boutique</h5>
+              <h5 className="mmf-footer__col-title">{t('footer.col_shop')}</h5>
               <ul className="mmf-footer__list">
-                <li><Link to="/catalogue" className="mmf-footer__link">Tous les articles</Link></li>
-                <li><Link to="/catalogue?category=femme" className="mmf-footer__link">Femme</Link></li>
-                <li><Link to="/catalogue?category=homme" className="mmf-footer__link">Homme</Link></li>
-                <li><Link to="/catalogue?category=enfant" className="mmf-footer__link">Enfant</Link></li>
-                <li><Link to="/catalogue?category=accessoires" className="mmf-footer__link">Accessoires</Link></li>
-                <li><Link to="/soldes" className="mmf-footer__link mmf-footer__link--sale">Soldes</Link></li>
+                <li><Link to="/catalogue" className="mmf-footer__link">{t('footer.all_items')}</Link></li>
+                <li><Link to="/catalogue?category=femme" className="mmf-footer__link">{t('footer.women')}</Link></li>
+                <li><Link to="/catalogue?category=homme" className="mmf-footer__link">{t('footer.men')}</Link></li>
+                <li><Link to="/catalogue?category=enfant" className="mmf-footer__link">{t('footer.kids')}</Link></li>
+                <li><Link to="/catalogue?category=accessoires" className="mmf-footer__link">{t('footer.accessories')}</Link></li>
+                <li><Link to="/soldes" className="mmf-footer__link mmf-footer__link--sale">{t('footer.sales')}</Link></li>
               </ul>
             </div>
 
             {/* Col 3 — Infos */}
             <div className="mmf-footer__col">
-              <h5 className="mmf-footer__col-title">Informations</h5>
+              <h5 className="mmf-footer__col-title">{t('footer.col_info')}</h5>
               <ul className="mmf-footer__list">
-                <li><Link to="/about" className="mmf-footer__link">Notre histoire</Link></li>
-                <li><Link to="/faq" className="mmf-footer__link">FAQ</Link></li>
-                <li><Link to="/livraison" className="mmf-footer__link">Livraison & retours</Link></li>
-                <li><Link to="/policy" className="mmf-footer__link">Politique de confidentialité</Link></li>
-                <li><Link to="/contact" className="mmf-footer__link">Contact</Link></li>
+                <li><Link to="/about" className="mmf-footer__link">{t('footer.our_story')}</Link></li>
+                <li><Link to="/faq" className="mmf-footer__link">{t('footer.faq')}</Link></li>
+                <li><Link to="/livraison" className="mmf-footer__link">{t('footer.shipping_returns')}</Link></li>
+                <li><Link to="/policy" className="mmf-footer__link">{t('footer.privacy')}</Link></li>
+                <li><Link to="/contact" className="mmf-footer__link">{t('footer.contact')}</Link></li>
               </ul>
             </div>
 
             {/* Col 4 — Contact + Réseaux */}
             <div className="mmf-footer__col">
-              <h5 className="mmf-footer__col-title">Nous trouver</h5>
+              <h5 className="mmf-footer__col-title">{t('footer.col_find_us')}</h5>
               <ul className="mmf-footer__list">
                 <li>
                   <a href="mailto:support@mixmatchfrip.com" className="mmf-footer__link mmf-footer__link--icon">
@@ -121,7 +125,7 @@ export default function Footer() {
                 </li>
               </ul>
 
-              <h5 className="mmf-footer__col-title" style={{ marginTop: '24px' }}>Réseaux sociaux</h5>
+              <h5 className="mmf-footer__col-title" style={{ marginTop: '24px' }}>{t('footer.col_social')}</h5>
               <div className="mmf-footer__socials">
                 <a
                   href="https://www.instagram.com/mixmatch_frip"
@@ -152,10 +156,10 @@ export default function Footer() {
       <div className="mmf-footer__bottom">
         <div className="mmf-footer__container">
           <p className="mmf-footer__copy">
-            © {new Date().getFullYear()} Mix&Match Frip. Tous droits réservés.
+            © {new Date().getFullYear()} Mix&Match Frip. {t('footer.copyright')}
           </p>
           <p className="mmf-footer__sub-copy">
-            Vêtements seconde main — Mode durable au Canada
+            {t('footer.sub_copy')}
           </p>
         </div>
       </div>

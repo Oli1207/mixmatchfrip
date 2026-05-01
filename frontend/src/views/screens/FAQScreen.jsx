@@ -1,43 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiPlus, FiMinus } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import './FAQScreen.css'
 import SEOHead, { schemaFAQ } from '../../components/SEOHead'
-
-const CATEGORIES = [
-  {
-    title: 'Commandes & Paiement',
-    items: [
-      { q: 'Quels modes de paiement acceptez-vous ?', a: 'Nous acceptons les cartes Visa, Mastercard et American Express via notre partenaire de paiement sécurisé Stripe. Toutes les transactions sont chiffrées.' },
-      { q: 'Puis-je modifier ou annuler ma commande ?', a: 'Vous pouvez annuler votre commande dans les 2 heures suivant l\'achat en nous contactant par email. Passé ce délai, la commande est déjà en traitement.' },
-      { q: 'Ma commande est-elle sécurisée ?', a: 'Absolument. Toutes vos informations personnelles et bancaires sont protégées par un chiffrement SSL de bout en bout. Nous ne stockons jamais vos données de carte.' },
-    ],
-  },
-  {
-    title: 'Livraison',
-    items: [
-      { q: 'Quels sont les délais de livraison ?', a: 'Livraison standard : 5-7 jours ouvrables. Livraison express : 2-3 jours ouvrables. Retrait en magasin disponible à Montréal sans frais.' },
-      { q: 'Livrez-vous partout au Canada ?', a: 'Oui, nous livrons dans toutes les provinces canadiennes via Canada Post. Des frais de livraison peuvent s\'appliquer selon votre province.' },
-      { q: 'Comment suivre ma commande ?', a: 'Vous recevrez un email avec votre numéro de suivi Canada Post dès que votre colis sera expédié. Vous pouvez suivre votre commande sur canadapost.ca.' },
-    ],
-  },
-  {
-    title: 'Retours & Échanges',
-    items: [
-      { q: 'Quelle est votre politique de retour ?', a: 'Vous disposez de 48 heures après réception de votre commande pour initier un retour. Les articles doivent être dans leur état d\'origine, non portés.' },
-      { q: 'Comment effectuer un retour ?', a: 'Contactez-nous par email avec votre numéro de commande. Nous vous enverrons une étiquette de retour prépayée. Le remboursement est traité sous 5-7 jours.' },
-      { q: 'Les frais de retour sont-ils à ma charge ?', a: 'Non, les frais de retour sont pris en charge par Mix&Match Frip pour tout article non conforme à la description. Pour un retour personnel, des frais de 4.99$ s\'appliquent.' },
-    ],
-  },
-  {
-    title: 'Articles & Qualité',
-    items: [
-      { q: 'Comment évaluez-vous l\'état des articles ?', a: 'Nous utilisons 4 niveaux : Neuf avec étiquette, Excellent état, Très bon état, Bon état. Chaque article est inspecté, nettoyé et photographié par notre équipe.' },
-      { q: 'Les articles sont-ils authentiques ?', a: 'Oui, chaque article de marque est authentifié par nos stylistes avant la mise en vente. Nous ne vendons aucune contrefaçon.' },
-      { q: 'Puis-je vendre mes vêtements sur Mix&Match Frip ?', a: 'Nous travaillons sur un programme de dépôt-vente ! Pour l\'instant, contactez-nous directement par email pour discuter de vos articles.' },
-    ],
-  },
-]
 
 function AccordionItem({ q, a }) {
   const [open, setOpen] = useState(false)
@@ -53,7 +19,43 @@ function AccordionItem({ q, a }) {
 }
 
 export default function FAQScreen() {
+  const { t } = useTranslation()
   const [activeCategory, setActiveCategory] = useState(null)
+
+  const CATEGORIES = [
+    {
+      title: t('faq.cat1_title'),
+      items: [
+        { q: t('faq.cat1_q1'), a: t('faq.cat1_a1') },
+        { q: t('faq.cat1_q2'), a: t('faq.cat1_a2') },
+        { q: t('faq.cat1_q3'), a: t('faq.cat1_a3') },
+      ],
+    },
+    {
+      title: t('faq.cat2_title'),
+      items: [
+        { q: t('faq.cat2_q1'), a: t('faq.cat2_a1') },
+        { q: t('faq.cat2_q2'), a: t('faq.cat2_a2') },
+        { q: t('faq.cat2_q3'), a: t('faq.cat2_a3') },
+      ],
+    },
+    {
+      title: t('faq.cat3_title'),
+      items: [
+        { q: t('faq.cat3_q1'), a: t('faq.cat3_a1') },
+        { q: t('faq.cat3_q2'), a: t('faq.cat3_a2') },
+        { q: t('faq.cat3_q3'), a: t('faq.cat3_a3') },
+      ],
+    },
+    {
+      title: t('faq.cat4_title'),
+      items: [
+        { q: t('faq.cat4_q1'), a: t('faq.cat4_a1') },
+        { q: t('faq.cat4_q2'), a: t('faq.cat4_a2') },
+        { q: t('faq.cat4_q3'), a: t('faq.cat4_a3') },
+      ],
+    },
+  ]
 
   const displayed = activeCategory
     ? CATEGORIES.filter(c => c.title === activeCategory)
@@ -64,16 +66,16 @@ export default function FAQScreen() {
   return (
     <div className="faq-page">
       <SEOHead
-        title="FAQ — Questions fréquentes"
+        title={t('faq.title')}
         description="Toutes les réponses à vos questions sur les commandes, la livraison, les retours et la qualité des articles MixMatchFrip."
         url="/faq"
         schema={schemaFAQ(allFaqItems)}
       />
       <div className="faq-header">
         <div className="faq-header__inner">
-          <p className="faq-header__tag">Aide</p>
-          <h1 className="faq-header__title">Questions fréquentes</h1>
-          <p className="faq-header__sub">Trouvez rapidement les réponses à vos questions.</p>
+          <p className="faq-header__tag">{t('faq.help_tag')}</p>
+          <h1 className="faq-header__title">{t('faq.title')}</h1>
+          <p className="faq-header__sub">{t('faq.subtitle')}</p>
         </div>
       </div>
 
@@ -85,7 +87,7 @@ export default function FAQScreen() {
               className={`faq-tab ${!activeCategory ? 'faq-tab--active' : ''}`}
               onClick={() => setActiveCategory(null)}
             >
-              Toutes
+              {t('faq.tab_all')}
             </button>
             {CATEGORIES.map(c => (
               <button
@@ -114,11 +116,11 @@ export default function FAQScreen() {
 
           {/* Contact CTA */}
           <div className="faq-contact">
-            <h3 className="faq-contact__title">Vous n'avez pas trouvé votre réponse ?</h3>
-            <p className="faq-contact__text">Notre équipe est disponible du lundi au vendredi de 9h à 18h.</p>
+            <h3 className="faq-contact__title">{t('faq.contact_title')}</h3>
+            <p className="faq-contact__text">{t('faq.contact_text')}</p>
             <div className="faq-contact__actions">
-              <a href="mailto:support@mixmatchfrip.com" className="btn-gold">Nous écrire</a>
-              <Link to="/livraison" className="btn-dark-outline">Infos livraison</Link>
+              <a href="mailto:support@mixmatchfrip.com" className="btn-gold">{t('faq.contact_write')}</a>
+              <Link to="/livraison" className="btn-dark-outline">{t('faq.contact_shipping')}</Link>
             </div>
           </div>
         </div>

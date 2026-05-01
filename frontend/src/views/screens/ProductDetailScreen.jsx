@@ -1,31 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiChevronRight, FiHeart, FiShare2, FiShield, FiTruck, FiRefreshCw, FiCheck, FiStar, FiCamera, FiMaximize2 } from 'react-icons/fi'
 import { productsAPI, wishlistAPI } from '../../utils/api'
 import useCartStore from '../../store/cart'
 import useAuthStore from '../../store/auth'
 import { formatPrice } from '../../utils/currency'
+import { loc } from '../../utils/loc'
 import './ProductDetailScreen.css'
 import SEOHead, { schemaProduct, schemaBreadcrumb } from '../../components/SEOHead'
 import { events as analyticsEvents } from '../../analytics/analytics'
 
-const CONDITION_META = {
-  new_with_tags: { label: 'Neuf avec etiquette', color: '#1a7a4a', bg: '#e8f5ee', desc: 'Jamais porte, etiquette d\'origine presente.' },
-  excellent:     { label: 'Excellent etat',       color: '#1a7a4a', bg: '#e8f5ee', desc: 'Comme neuf, aucun defaut visible.' },
-  very_good:     { label: 'Tres bon etat',        color: '#2563eb', bg: '#eff6ff', desc: 'Legeres traces d\'usage, tres bon etat general.' },
-  good:          { label: 'Bon etat',             color: '#b45309', bg: '#fffbeb', desc: 'Signes normaux de port, bon etat general.' },
+const CONDITION_COLORS = {
+  new_with_tags: { color: '#1a7a4a', bg: '#e8f5ee' },
+  excellent:     { color: '#1a7a4a', bg: '#e8f5ee' },
+  very_good:     { color: '#2563eb', bg: '#eff6ff' },
+  good:          { color: '#b45309', bg: '#fffbeb' },
 }
 
-// Parse mix_match_tips : chaque ligne commencant par "-" devient un item
 function parseMixMatchTips(text) {
   if (!text) return []
-  return text.split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0)
-    .map(l => l.replace(/^[-*]\s*/, ''))
+  return text.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => l.replace(/^[-*]\s*/, ''))
 }
 
 export default function ProductDetailScreen() {
+  const { t, i18n }    = useTranslation()
+  const lng            = i18n.language
   const { slug }       = useParams()
   const navigate       = useNavigate()
   const { isLoggedIn } = useAuthStore()
@@ -40,18 +40,18 @@ export default function ProductDetailScreen() {
   const [cartLoading, setCartLoading] = useState(false)
   const [activeTab,   setActiveTab]   = useState('description')
 
+  const CONDITION_LABELS = {
+    new_with_tags: t('catalogue.condition_new_tags'),
+    excellent:     t('catalogue.condition_excellent'),
+    very_good:     t('catalogue.condition_very_good'),
+    good:          t('catalogue.condition_good'),
+  }
+
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    setActiveImg(0)
-    setActiveTab('description')
+    setLoading(true); setError(null); setActiveImg(0); setActiveTab('description')
     productsAPI.detail(slug)
-      .then(({ data }) => {
-        setProduct(data)
-        setLoading(false)
-        analyticsEvents.viewProduct(data)
-      })
-      .catch(() => { setError('Produit introuvable.'); setLoading(false) })
+      .then(({ data }) => { setProduct(data); setLoading(false); analyticsEvents.viewProduct(data) })
+      .catch(() => { setError(t('product.not_found_title')); setLoading(false) })
   }, [slug])
 
   const handleAddToCart = async () => {
@@ -59,28 +59,18 @@ export default function ProductDetailScreen() {
     setCartLoading(true)
     const result = await addItem(product.id, 1, product)
     setCartLoading(false)
-    if (result.success) {
-      setAddedToCart(true)
-      setTimeout(() => setAddedToCart(false), 2500)
-    }
+    if (result.success) { setAddedToCart(true); setTimeout(() => setAddedToCart(false), 2500) }
   }
 
-  const handleBuyNow = async () => {
-    await handleAddToCart()
-    navigate('/cart')
-  }
+  const handleBuyNow = async () => { await handleAddToCart(); navigate('/cart') }
 
   const handleWishlistToggle = async () => {
     if (!isLoggedIn()) { navigate('/login'); return }
     setWishlisted(v => !v)
-    try {
-      await wishlistAPI.toggle(product.id)
-    } catch {
-      setWishlisted(v => !v)
-    }
+    try { await wishlistAPI.toggle(product.id) }
+    catch { setWishlisted(v => !v) }
   }
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="pdp">
@@ -101,27 +91,48 @@ export default function ProductDetailScreen() {
     return (
       <div className="pdp">
         <div className="pdp-error">
-          <h2>Produit introuvable</h2>
-          <Link to="/catalogue" className="btn-gold">Retour a la boutique</Link>
+          <h2>{t('product.not_found_title')}</h2>
+          <Link to="/catalogue" className="btn-gold">{t('product.back_to_shop')}</Link>
         </div>
       </div>
     )
   }
 
-  const images    = product.images || []
-  const mainImg   = images[activeImg]?.image || null
-  const condInfo  = CONDITION_META[product.condition] || CONDITION_META.good
-  const related   = product.related || []
-  const bullets   = [product.bullet_1, product.bullet_2, product.bullet_3, product.bullet_4].filter(Boolean)
-  const mixTips   = parseMixMatchTips(product.mix_match_tips)
+  const images      = product.images || []
+  const mainImg     = images[activeImg]?.image || null
+  const condColors  = CONDITION_COLORS[product.condition] || CONDITION_COLORS.good
+  const condLabel   = CONDITION_LABELS[product.condition] || product.condition
+  const related     = product.related || []
+
+  // Localized content fields
+  const productName    = loc(product, 'name',           lng)
+  const productDesc    = loc(product, 'description',    lng)
+  const productMat     = loc(product, 'material',       lng)
+  const productDetails = loc(product, 'details',        lng)
+  const productSizeRec = loc(product, 'size_recommendation', lng)
+  const productExpert  = loc(product, 'expert_tip',     lng)
+  const productMix     = loc(product, 'mix_match_tips', lng)
+
+  const bullets = [
+    loc(product, 'bullet_1', lng),
+    loc(product, 'bullet_2', lng),
+    loc(product, 'bullet_3', lng),
+    loc(product, 'bullet_4', lng),
+  ].filter(Boolean)
+
+  const mixTips = parseMixMatchTips(productMix)
+
+  // Category/Subcategory localized names
+  const catName  = loc(product.category,    'name', lng) || product.category?.name
+  const subName  = loc(product.subcategory, 'name', lng) || product.subcategory?.name
 
   const measures = [
-    { label: 'Epaule a epaule',     value: product.measure_shoulder },
-    { label: 'Aisselle a aisselle', value: product.measure_chest },
-    { label: 'Taille',              value: product.measure_waist },
-    { label: 'Hanches',             value: product.measure_hips },
-    { label: 'Longueur totale',     value: product.measure_length },
-    { label: 'Longueur des manches',value: product.measure_sleeve },
+    { label: t('product.measures_shoulder'), value: product.measure_shoulder },
+    { label: t('product.measures_chest'),    value: product.measure_chest },
+    { label: t('product.measures_waist'),    value: product.measure_waist },
+    { label: t('product.measures_hips'),     value: product.measure_hips },
+    { label: t('product.measures_length'),   value: product.measure_length },
+    { label: t('product.measures_sleeve'),   value: product.measure_sleeve },
   ].filter(m => m.value != null)
 
   const mainImageUrl = images[0]?.image || null
@@ -130,10 +141,10 @@ export default function ProductDetailScreen() {
     '@graph': [
       schemaProduct(product, mainImageUrl),
       schemaBreadcrumb([
-        { name: 'Accueil', url: '/' },
-        { name: 'Catalogue', url: '/catalogue' },
-        { name: product.category?.name || 'Catégorie', url: `/catalogue?category=${product.category?.slug}` },
-        { name: product.name },
+        { name: t('product.breadcrumb_home'), url: '/' },
+        { name: t('product.breadcrumb_catalogue'), url: '/catalogue' },
+        { name: catName || '', url: `/catalogue?category=${product.category?.slug}` },
+        { name: productName },
       ]),
     ],
   }
@@ -141,8 +152,8 @@ export default function ProductDetailScreen() {
   return (
     <div className="pdp">
       <SEOHead
-        title={`${product.brand ? `${product.brand} — ` : ''}${product.name}`}
-        description={product.description || `${product.name}${product.brand ? ` par ${product.brand}` : ''}. Taille ${product.size}. État : ${condInfo.label}. ${product.price} $ CAD — livraison partout au Canada.`}
+        title={`${product.brand ? `${product.brand} — ` : ''}${productName}`}
+        description={productDesc || `${productName}. ${product.price} $ CAD`}
         image={mainImageUrl || undefined}
         url={`/product/${product.slug}`}
         type="og:product"
@@ -152,102 +163,80 @@ export default function ProductDetailScreen() {
       {/* Breadcrumb */}
       <div className="pdp-breadcrumb">
         <div className="pdp-breadcrumb__inner">
-          <Link to="/">Accueil</Link>
+          <Link to="/">{t('product.breadcrumb_home')}</Link>
           <FiChevronRight size={12}/>
-          <Link to="/catalogue">Boutique</Link>
+          <Link to="/catalogue">{t('product.breadcrumb_shop')}</Link>
           <FiChevronRight size={12}/>
           {product.category && (
-            <>
-              <Link to={`/catalogue?category=${product.category.slug}`}>{product.category.name}</Link>
-              <FiChevronRight size={12}/>
-            </>
+            <><Link to={`/catalogue?category=${product.category.slug}`}>{catName}</Link><FiChevronRight size={12}/></>
           )}
           {product.subcategory && (
-            <>
-              <Link to={`/catalogue?subcategory=${product.subcategory.slug}`}>{product.subcategory.name}</Link>
-              <FiChevronRight size={12}/>
-            </>
+            <><Link to={`/catalogue?subcategory=${product.subcategory.slug}`}>{subName}</Link><FiChevronRight size={12}/></>
           )}
-          <span>{product.name}</span>
+          <span>{productName}</span>
         </div>
       </div>
 
       {/* Main */}
       <div className="pdp-main">
-
-        {/* ── Gallery ── */}
+        {/* Gallery */}
         <div className="pdp-gallery">
           <div className="pdp-gallery__thumbs">
             {images.map((img, i) => (
-              <button key={img.id} className={`pdp-thumb${activeImg === i ? ' active' : ''}`}
-                onClick={() => setActiveImg(i)}>
-                <img src={img.image} alt={`${product.name} ${i + 1}`}/>
+              <button key={img.id} className={`pdp-thumb${activeImg === i ? ' active' : ''}`} onClick={() => setActiveImg(i)}>
+                <img src={img.image} alt={`${productName} ${i + 1}`}/>
               </button>
             ))}
           </div>
           <div className="pdp-gallery__main">
             {mainImg
-              ? <img src={mainImg} alt={product.name} className="pdp-gallery__img"/>
-              : <div className="pdp-gallery__placeholder">Pas d'image</div>
+              ? <img src={mainImg} alt={productName} className="pdp-gallery__img"/>
+              : <div className="pdp-gallery__placeholder">{t('product.no_image')}</div>
             }
-            {product.discount_percent > 0 && (
-              <span className="pdp-gallery__badge">-{product.discount_percent}%</span>
-            )}
-            <button className={`pdp-wishlist${wishlisted ? ' active' : ''}`}
-              onClick={handleWishlistToggle} aria-label="Favori">
+            {product.discount_percent > 0 && <span className="pdp-gallery__badge">-{product.discount_percent}%</span>}
+            <button className={`pdp-wishlist${wishlisted ? ' active' : ''}`} onClick={handleWishlistToggle} aria-label={t('product.wishlist_add')}>
               <FiHeart size={18} fill={wishlisted ? 'currentColor' : 'none'}/>
             </button>
           </div>
         </div>
 
-        {/* ── Info ── */}
+        {/* Info */}
         <div className="pdp-info">
-
-          {/* Marque + Titre */}
           <p className="pdp-brand">{product.brand}</p>
-          <h1 className="pdp-name">{product.name}</h1>
+          <h1 className="pdp-name">{productName}</h1>
 
-          {/* Etat */}
-          <span className="pdp-condition" style={{ background: condInfo.bg, color: condInfo.color }}>
-            ● {condInfo.label}
+          <span className="pdp-condition" style={{ background: condColors.bg, color: condColors.color }}>
+            ● {condLabel}
           </span>
 
-          {/* Prix */}
           <div className="pdp-prices">
             <span className="pdp-price">{formatPrice(product.price)}</span>
             {product.original_price && <span className="pdp-original">{formatPrice(product.original_price)}</span>}
-            {product.discount_percent > 0 && (
-              <span className="pdp-discount">-{product.discount_percent}%</span>
-            )}
+            {product.discount_percent > 0 && <span className="pdp-discount">-{product.discount_percent}%</span>}
           </div>
 
-          {/* Bullets — arguments de vente */}
           {bullets.length > 0 && (
             <ul className="pdp-bullets">
               {bullets.map((b, i) => (
-                <li key={i} className="pdp-bullet">
-                  <FiCheck size={14} className="pdp-bullet__icon"/>
-                  <span>{b}</span>
-                </li>
+                <li key={i} className="pdp-bullet"><FiCheck size={14} className="pdp-bullet__icon"/><span>{b}</span></li>
               ))}
             </ul>
           )}
 
-          {/* Meta rapide : taille + couleurs */}
           <div className="pdp-meta">
             <div className="pdp-meta__item">
-              <span className="pdp-meta__label">Taille indiquee</span>
+              <span className="pdp-meta__label">{t('product.size_indicated')}</span>
               <span className="pdp-meta__val pdp-size">{product.size_tag || product.size}</span>
             </div>
-            {product.size_recommendation && (
+            {productSizeRec && (
               <div className="pdp-meta__item">
-                <span className="pdp-meta__label">Recommandee</span>
-                <span className="pdp-meta__val" style={{fontSize:12}}>{product.size_recommendation}</span>
+                <span className="pdp-meta__label">{t('product.size_recommended')}</span>
+                <span className="pdp-meta__val" style={{fontSize:12}}>{productSizeRec}</span>
               </div>
             )}
             {Array.isArray(product.color) && product.color.length > 0 && (
               <div className="pdp-meta__item">
-                <span className="pdp-meta__label">Couleur{product.color.length > 1 ? 's' : ''}</span>
+                <span className="pdp-meta__label">{product.color.length > 1 ? t('product.colors') : t('product.color')}</span>
                 <div className="pdp-colors">
                   {product.color.map(hex => (
                     <span key={hex} className="pdp-color-dot"
@@ -259,23 +248,18 @@ export default function ProductDetailScreen() {
             )}
           </div>
 
-          {/* Stock warning */}
           {product.stock <= 3 && product.stock > 0 && (
-            <p className="pdp-stock-warn">Plus que {product.stock} disponible !</p>
+            <p className="pdp-stock-warn">{t('product.stock_warning', { count: product.stock })}</p>
           )}
 
-          {/* CTA */}
           <div className="pdp-cta">
-            <button
-              className={`pdp-add-btn${addedToCart ? ' added' : ''}`}
-              onClick={handleAddToCart}
-              disabled={cartLoading || !product.is_available}
-            >
-              {!product.is_available ? 'Épuisé'
-                : cartLoading ? 'Ajout...'
+            <button className={`pdp-add-btn${addedToCart ? ' added' : ''}`} onClick={handleAddToCart}
+              disabled={cartLoading || !product.is_available}>
+              {!product.is_available ? t('product.out_of_stock')
+                : cartLoading ? t('product.adding')
                 : addedToCart
-                  ? <><FiCheck size={14} style={{ marginRight: 4 }}/>Ajouté au panier</>
-                  : 'Ajouter au panier'}
+                  ? <><FiCheck size={14} style={{ marginRight: 4 }}/>{t('product.added_to_cart')}</>
+                  : t('product.add_to_cart')}
             </button>
             <button className={`pdp-wish-btn${wishlisted ? ' active' : ''}`} onClick={handleWishlistToggle}>
               <FiHeart size={18} fill={wishlisted ? 'currentColor' : 'none'}/>
@@ -283,130 +267,111 @@ export default function ProductDetailScreen() {
           </div>
 
           <button className="pdp-buy-btn" onClick={handleBuyNow} disabled={!product.is_available}>
-            Acheter maintenant
+            {t('product.buy_now')}
           </button>
 
-          {/* Garanties */}
           <div className="pdp-perks">
-            <div className="pdp-perk"><FiCheck size={14}/> Pièce nettoyée et prête à porter</div>
-            <div className="pdp-perk"><FiCamera size={14}/> Photographies authentiques, sans filtres ni retouches</div>
-            <div className="pdp-perk"><FiMaximize2 size={14}/> Guide des mesures détaillé — achetez sans risque d'erreur de taille</div>
-            <div className="pdp-perk"><FiTruck size={14}/> Expédiée sous 24 à 48h via Postes Canada</div>
-            <div className="pdp-perk"><FiRefreshCw size={14}/> Remboursement sous 48h si non conforme à la description</div>
-            <div className="pdp-perk"><FiShield size={14}/> Paiement 100% sécurisé — vos données bancaires sont protégées</div>
+            <div className="pdp-perk"><FiCheck size={14}/> {t('product.perk_cleaned')}</div>
+            <div className="pdp-perk"><FiCamera size={14}/> {t('product.perk_photos')}</div>
+            <div className="pdp-perk"><FiMaximize2 size={14}/> {t('product.perk_measures_guide')}</div>
+            <div className="pdp-perk"><FiTruck size={14}/> {t('product.perk_shipping_note')}</div>
+            <div className="pdp-perk"><FiRefreshCw size={14}/> {t('product.perk_returns_note')}</div>
+            <div className="pdp-perk"><FiShield size={14}/> {t('product.perk_payment_note')}</div>
           </div>
 
-          <button className="pdp-share"
-            onClick={() => navigator.share?.({ title: product.name, url: window.location.href })}>
-            <FiShare2 size={14}/> Partager cet article
+          <button className="pdp-share" onClick={() => navigator.share?.({ title: productName, url: window.location.href })}>
+            <FiShare2 size={14}/> {t('product.share_item')}
           </button>
         </div>
       </div>
 
-      {/* ── Onglets Description ── */}
+      {/* Onglets */}
       <div className="pdp-tabs-section">
         <div className="pdp-tabs-inner">
-
           <div className="pdp-tabs">
             {[
-              { key: 'description', label: 'Description' },
-              { key: 'identity',    label: 'Carte d\'identite' },
-              ...(mixTips.length ? [{ key: 'mixmatch', label: 'Mix & Match' }] : []),
-              ...(product.expert_tip ? [{ key: 'expert', label: 'Conseil Expert' }] : []),
+              { key: 'description', label: t('product.tab_description') },
+              { key: 'identity',    label: t('product.tab_identity') },
+              ...(mixTips.length ? [{ key: 'mixmatch', label: t('product.tab_mix') }] : []),
+              ...(productExpert   ? [{ key: 'expert',  label: t('product.tab_expert') }] : []),
             ].map(tab => (
-              <button key={tab.key}
-                className={`pdp-tab${activeTab === tab.key ? ' active' : ''}`}
-                onClick={() => setActiveTab(tab.key)}>
-                {tab.label}
-              </button>
+              <button key={tab.key} className={`pdp-tab${activeTab === tab.key ? ' active' : ''}`}
+                onClick={() => setActiveTab(tab.key)}>{tab.label}</button>
             ))}
           </div>
 
           <div className="pdp-tab-content">
-
-            {/* Description */}
             {activeTab === 'description' && (
               <div className="pdp-tab-pane">
-                {product.description
-                  ? <p className="pdp-desc-text">{product.description}</p>
-                  : <p className="pdp-desc-empty">Aucune description disponible.</p>
+                {productDesc
+                  ? <p className="pdp-desc-text">{productDesc}</p>
+                  : <p className="pdp-desc-empty">{t('product.no_description')}</p>
                 }
               </div>
             )}
 
-            {/* Carte d'identite */}
             {activeTab === 'identity' && (
               <div className="pdp-tab-pane">
                 <div className="pdp-identity">
-
-                  {/* Infos generales */}
                   <div className="pdp-identity__section">
-                    <h4 className="pdp-identity__subtitle">Informations generales</h4>
+                    <h4 className="pdp-identity__subtitle">{t('product.general_info')}</h4>
                     <div className="pdp-identity__grid">
                       {product.brand && (
                         <div className="pdp-id-row">
-                          <span className="pdp-id-label">Marque</span>
+                          <span className="pdp-id-label">{t('product.brand_label')}</span>
                           <span className="pdp-id-val">{product.brand}</span>
                         </div>
                       )}
                       <div className="pdp-id-row">
-                        <span className="pdp-id-label">Etat</span>
-                        <span className="pdp-id-val" style={{ color: condInfo.color, fontWeight: 600 }}>
-                          {condInfo.label}
-                        </span>
+                        <span className="pdp-id-label">{t('product.condition_label')}</span>
+                        <span className="pdp-id-val" style={{ color: condColors.color, fontWeight: 600 }}>{condLabel}</span>
                       </div>
                       <div className="pdp-id-row">
-                        <span className="pdp-id-label">Taille indiquee</span>
+                        <span className="pdp-id-label">{t('product.size_indicated')}</span>
                         <span className="pdp-id-val">{product.size_tag || product.size}</span>
                       </div>
-                      {product.size_recommendation && (
+                      {productSizeRec && (
                         <div className="pdp-id-row">
-                          <span className="pdp-id-label">Taille recommandee</span>
-                          <span className="pdp-id-val">{product.size_recommendation}</span>
+                          <span className="pdp-id-label">{t('product.size_recommended')}</span>
+                          <span className="pdp-id-val">{productSizeRec}</span>
                         </div>
                       )}
-                      {product.material && (
+                      {productMat && (
                         <div className="pdp-id-row pdp-id-row--full">
-                          <span className="pdp-id-label">Matiere</span>
-                          <span className="pdp-id-val">{product.material}</span>
+                          <span className="pdp-id-label">{t('product.material_label')}</span>
+                          <span className="pdp-id-val">{productMat}</span>
                         </div>
                       )}
-                      {product.details && (
+                      {productDetails && (
                         <div className="pdp-id-row pdp-id-row--full">
-                          <span className="pdp-id-label">Details</span>
-                          <span className="pdp-id-val">{product.details}</span>
+                          <span className="pdp-id-label">{t('product.details_label')}</span>
+                          <span className="pdp-id-val">{productDetails}</span>
                         </div>
                       )}
                     </div>
                   </div>
-
-                  {/* Mesures */}
                   {measures.length > 0 && (
                     <div className="pdp-identity__section">
-                      <h4 className="pdp-identity__subtitle">Mesures a plat</h4>
-                      <p className="pdp-identity__hint">Toutes les mesures sont en centimetres, prises a plat.</p>
+                      <h4 className="pdp-identity__subtitle">{t('product.flat_measures')}</h4>
+                      <p className="pdp-identity__hint">{t('product.measures_hint')}</p>
                       <div className="pdp-measures">
                         {measures.map(m => (
                           <div key={m.label} className="pdp-measure-row">
                             <span className="pdp-measure-label">{m.label}</span>
-                            <span className="pdp-measure-val">{m.value} cm</span>
+                            <span className="pdp-measure-val">{m.value} {t('product.measures_cm')}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-
                 </div>
               </div>
             )}
 
-            {/* Mix & Match */}
             {activeTab === 'mixmatch' && (
               <div className="pdp-tab-pane">
                 <div className="pdp-mixmatch">
-                  <p className="pdp-mixmatch__intro">
-                    Quelques idees pour porter cette piece avec style :
-                  </p>
+                  <p className="pdp-mixmatch__intro">{t('product.mixmatch_intro')}</p>
                   <div className="pdp-mixmatch__list">
                     {mixTips.map((tip, i) => (
                       <div key={i} className="pdp-mix-item">
@@ -419,19 +384,17 @@ export default function ProductDetailScreen() {
               </div>
             )}
 
-            {/* Conseil expert */}
-            {activeTab === 'expert' && product.expert_tip && (
+            {activeTab === 'expert' && productExpert && (
               <div className="pdp-tab-pane">
                 <div className="pdp-expert">
                   <div className="pdp-expert__avatar"><FiStar size={20}/></div>
                   <div className="pdp-expert__body">
-                    <p className="pdp-expert__label">Conseil de notre styliste</p>
-                    <p className="pdp-expert__text">{product.expert_tip}</p>
+                    <p className="pdp-expert__label">{t('product.expert_label')}</p>
+                    <p className="pdp-expert__text">{productExpert}</p>
                   </div>
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>
@@ -440,26 +403,27 @@ export default function ProductDetailScreen() {
       {related.length > 0 && (
         <div className="pdp-related">
           <div className="pdp-related__inner">
-            <h2 className="pdp-related__title">Vous aimerez aussi</h2>
+            <h2 className="pdp-related__title">{t('product.related_title')}</h2>
             <div className="pdp-related__grid">
-              {related.map(p => (
-                <Link key={p.id} to={`/product/${p.slug}`} className="pdp-rel-card">
-                  <div className="pdp-rel-card__img-wrap">
-                    {p.main_image_url
-                      ? <img src={p.main_image_url} alt={p.name} className="pdp-rel-card__img"/>
-                      : <div className="pdp-gallery__placeholder" />
-                    }
-                    {p.discount_percent > 0 && (
-                      <span className="pdp-rel-card__badge">-{p.discount_percent}%</span>
-                    )}
-                  </div>
-                  <div className="pdp-rel-card__info">
-                    <span className="pdp-rel-card__brand">{p.brand}</span>
-                    <p className="pdp-rel-card__name">{p.name}</p>
-                    <span className="pdp-rel-card__price">{formatPrice(p.price)}</span>
-                  </div>
-                </Link>
-              ))}
+              {related.map(p => {
+                const relName = loc(p, 'name', lng)
+                return (
+                  <Link key={p.id} to={`/product/${p.slug}`} className="pdp-rel-card">
+                    <div className="pdp-rel-card__img-wrap">
+                      {p.main_image_url
+                        ? <img src={p.main_image_url} alt={relName} className="pdp-rel-card__img"/>
+                        : <div className="pdp-gallery__placeholder" />
+                      }
+                      {p.discount_percent > 0 && <span className="pdp-rel-card__badge">-{p.discount_percent}%</span>}
+                    </div>
+                    <div className="pdp-rel-card__info">
+                      <span className="pdp-rel-card__brand">{p.brand}</span>
+                      <p className="pdp-rel-card__name">{relName}</p>
+                      <span className="pdp-rel-card__price">{formatPrice(p.price)}</span>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </div>

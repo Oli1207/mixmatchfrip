@@ -5,10 +5,13 @@ import { logout } from '../../utils/auth'
 import useCartStore from '../../store/cart'
 import { categoriesAPI } from '../../utils/api'
 import { FiSearch, FiShoppingBag, FiUser, FiX, FiMenu, FiChevronDown, FiTruck, FiStar, FiSettings } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../../components/LanguageSwitcher'
 import logo from '../../assets/logo.jpeg'
 import './Navbar.css'
 
 export default function Navbar() {
+  const { t } = useTranslation()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -83,10 +86,10 @@ export default function Navbar() {
       <div className="mmf-announce">
         <span>
           <FiTruck size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>
-          Livraison gratuite au Canada à partir de 75$ CAD
+          {t('navbar.announce_shipping')}
           &nbsp;&nbsp;|&nbsp;&nbsp;
           <FiStar size={13} style={{ marginRight: 5, verticalAlign: 'middle' }}/>
-          Nouveautés chaque semaine
+          {t('navbar.announce_new')}
         </span>
       </div>
 
@@ -98,13 +101,13 @@ export default function Navbar() {
           <ul className="mmf-nav__links">
             <li>
               <Link to="/catalogue" className={`mmf-nav__link${isActive('/catalogue') ? ' active' : ''}`}>
-                Boutique
+                {t('navbar.shop')}
               </Link>
             </li>
             {categories.length > 0 && (
               <li ref={catRef} className="mmf-nav__ddwrap">
                 <button className="mmf-nav__link mmf-nav__link--btn" onClick={() => setCatOpen(v => !v)}>
-                  Catégories <FiChevronDown size={12} className={`mmf-chevron${catOpen ? ' open' : ''}`} />
+                  {t('navbar.categories')} <FiChevronDown size={12} className={`mmf-chevron${catOpen ? ' open' : ''}`} />
                 </button>
                 {catOpen && (
                   <div className="mmf-nav__dd">
@@ -119,11 +122,11 @@ export default function Navbar() {
             )}
             <li>
               <Link to="/nouveautes" className={`mmf-nav__link${isActive('/nouveautes') ? ' active' : ''}`}>
-                Nouveautés
+                {t('navbar.new_arrivals')}
               </Link>
             </li>
             <li>
-              <Link to="/soldes" className="mmf-nav__link mmf-nav__link--sale">Soldes</Link>
+              <Link to="/soldes" className="mmf-nav__link mmf-nav__link--sale">{t('navbar.sales')}</Link>
             </li>
           </ul>
 
@@ -134,12 +137,14 @@ export default function Navbar() {
 
           {/* RIGHT — Icons */}
           <div className="mmf-nav__icons">
-            <button className="mmf-nav__icon" onClick={() => setSearchOpen(true)} aria-label="Rechercher">
+            <button className="mmf-nav__icon" onClick={() => setSearchOpen(true)} aria-label={t('navbar.search_placeholder')}>
               <FiSearch size={19} />
             </button>
 
+            <LanguageSwitcher />
+
             <div ref={userRef} className="mmf-nav__ddwrap">
-              <button className="mmf-nav__icon" onClick={() => setUserOpen(v => !v)} aria-label="Mon compte">
+              <button className="mmf-nav__icon" onClick={() => setUserOpen(v => !v)} aria-label={t('navbar.my_account')}>
                 <FiUser size={19} />
               </button>
               {userOpen && (
@@ -147,31 +152,31 @@ export default function Navbar() {
                   {isLoggedIn() ? (
                     <>
                       <div className="mmf-nav__dd-header">
-                        Bonjour, {user?.full_name?.split(' ')[0] || 'Vous'}
+                        {t('navbar.hello')}, {user?.full_name?.split(' ')[0] || ''}
                       </div>
                       {user?.is_staff && (
                         <Link to="/dashboard" className="mmf-nav__dd-item mmf-nav__dd-item--admin">
-                          <FiSettings size={13} style={{ marginRight: 5 }}/>Dashboard admin
+                          <FiSettings size={13} style={{ marginRight: 5 }}/>{t('navbar.admin_dashboard')}
                         </Link>
                       )}
-                      <Link to="/account" className="mmf-nav__dd-item">Mon compte</Link>
-                      <Link to="/orders" className="mmf-nav__dd-item">Mes commandes</Link>
+                      <Link to="/account" className="mmf-nav__dd-item">{t('navbar.my_account')}</Link>
+                      <Link to="/orders" className="mmf-nav__dd-item">{t('navbar.my_orders')}</Link>
                       <div className="mmf-nav__dd-divider" />
                       <button className="mmf-nav__dd-item mmf-nav__dd-item--logout" onClick={handleLogout}>
-                        Déconnexion
+                        {t('navbar.logout')}
                       </button>
                     </>
                   ) : (
                     <>
-                      <Link to="/login" className="mmf-nav__dd-item">Se connecter</Link>
-                      <Link to="/register" className="mmf-nav__dd-item">Créer un compte</Link>
+                      <Link to="/login" className="mmf-nav__dd-item">{t('navbar.login')}</Link>
+                      <Link to="/register" className="mmf-nav__dd-item">{t('navbar.create_account')}</Link>
                     </>
                   )}
                 </div>
               )}
             </div>
 
-            <Link to="/cart" className="mmf-nav__icon mmf-nav__cart" aria-label="Panier">
+            <Link to="/cart" className="mmf-nav__icon mmf-nav__cart" aria-label={t('navbar.cart')}>
               <FiShoppingBag size={19} />
               {cartCount > 0 && <span className="mmf-nav__cart-badge">{cartCount}</span>}
             </Link>
@@ -192,7 +197,7 @@ export default function Navbar() {
               <input
                 ref={searchRef}
                 type="text"
-                placeholder="Rechercher un vêtement, une marque..."
+                placeholder={t('navbar.search_placeholder')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="mmf-search-input"
@@ -208,10 +213,10 @@ export default function Navbar() {
       {/* Mobile Menu */}
       <div className={`mmf-mobile${mobileOpen ? ' open' : ''}`}>
         <div className="mmf-mobile__inner">
-          <Link to="/catalogue" className="mmf-mobile__link">Boutique</Link>
+          <Link to="/catalogue" className="mmf-mobile__link">{t('navbar.shop')}</Link>
           {categories.length > 0 && (
             <div className="mmf-mobile__section">
-              <span className="mmf-mobile__section-title">Catégories</span>
+              <span className="mmf-mobile__section-title">{t('navbar.categories')}</span>
               {categories.map(c => (
                 <Link key={c.slug} to={`/catalogue?category=${c.slug}`} className="mmf-mobile__link mmf-mobile__link--sub">
                   {c.name}
@@ -219,19 +224,19 @@ export default function Navbar() {
               ))}
             </div>
           )}
-          <Link to="/nouveautes" className="mmf-mobile__link">Nouveautés</Link>
-          <Link to="/soldes" className="mmf-mobile__link mmf-mobile__link--sale">Soldes</Link>
+          <Link to="/nouveautes" className="mmf-mobile__link">{t('navbar.new_arrivals')}</Link>
+          <Link to="/soldes" className="mmf-mobile__link mmf-mobile__link--sale">{t('navbar.sales')}</Link>
           <div className="mmf-mobile__divider" />
           {isLoggedIn() ? (
             <>
-              <Link to="/account" className="mmf-mobile__link">Mon compte</Link>
-              <Link to="/orders" className="mmf-mobile__link">Mes commandes</Link>
-              <button className="mmf-mobile__link mmf-mobile__link--logout" onClick={handleLogout}>Déconnexion</button>
+              <Link to="/account" className="mmf-mobile__link">{t('navbar.my_account')}</Link>
+              <Link to="/orders" className="mmf-mobile__link">{t('navbar.my_orders')}</Link>
+              <button className="mmf-mobile__link mmf-mobile__link--logout" onClick={handleLogout}>{t('navbar.logout')}</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="mmf-mobile__link">Se connecter</Link>
-              <Link to="/register" className="mmf-mobile__link">Créer un compte</Link>
+              <Link to="/login" className="mmf-mobile__link">{t('navbar.login')}</Link>
+              <Link to="/register" className="mmf-mobile__link">{t('navbar.create_account')}</Link>
             </>
           )}
         </div>

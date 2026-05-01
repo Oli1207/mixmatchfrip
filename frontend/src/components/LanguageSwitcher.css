@@ -1,0 +1,34 @@
+.lang-sw {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.lang-sw__btn {
+  background: none;
+  border: none;
+  padding: 4px 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--gray-text, #888);
+  cursor: pointer;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.lang-sw__btn.active {
+  color: var(--black, #1a1a1a);
+}
+
+.lang-sw__btn:hover:not(.active) {
+  color: var(--gold, #C9A84C);
+}
+
+.lang-sw__sep {
+  font-size: 10px;
+  color: #ccc;
+  line-height: 1;
+  pointer-events: none;
+}

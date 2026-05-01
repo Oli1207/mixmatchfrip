@@ -11,7 +11,7 @@ from .models import (
 class SubcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model  = Subcategory
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'name_en', 'slug']
 
 
 class SubcategoryAdminSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class SubcategoryAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Subcategory
-        fields = ['id', 'name', 'slug', 'category_id', 'category_name']
+        fields = ['id', 'name', 'name_en', 'slug', 'category_id', 'category_name']
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Category
-        fields = ['id', 'name', 'slug', 'image', 'product_count', 'subcategories']
+        fields = ['id', 'name', 'name_en', 'slug', 'image', 'product_count', 'subcategories']
 
 
 # ─── Product Images ───────────────────────────────────────────────────────────
@@ -43,19 +43,22 @@ class ProductImageSerializer(serializers.ModelSerializer):
 # ─── Product List (catalogue grid) ───────────────────────────────────────────
 
 class ProductListSerializer(serializers.ModelSerializer):
-    category_name    = serializers.CharField(source='category.name', read_only=True)
-    subcategory_name = serializers.CharField(source='subcategory.name', read_only=True)
-    main_image_url   = serializers.SerializerMethodField()
-    discount_percent = serializers.IntegerField(read_only=True)
+    category_name       = serializers.CharField(source='category.name',    read_only=True)
+    category_name_en    = serializers.CharField(source='category.name_en', read_only=True)
+    subcategory_name    = serializers.CharField(source='subcategory.name',    read_only=True)
+    subcategory_name_en = serializers.CharField(source='subcategory.name_en', read_only=True)
+    main_image_url      = serializers.SerializerMethodField()
+    discount_percent    = serializers.IntegerField(read_only=True)
 
     class Meta:
         model  = Product
         fields = [
-            'id', 'name', 'brand', 'slug',
+            'id', 'name', 'name_en', 'brand', 'slug',
             'price', 'original_price', 'discount_percent',
             'size', 'size_tag', 'condition', 'color', 'weight_g',
-            'category_name', 'subcategory_name', 'main_image_url',
-            'is_available', 'stock',
+            'category_name', 'category_name_en',
+            'subcategory_name', 'subcategory_name_en',
+            'main_image_url', 'is_available', 'stock',
         ]
 
     def get_main_image_url(self, obj):
@@ -80,22 +83,30 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model  = Product
         fields = [
             # Identification
-            'id', 'name', 'brand', 'slug',
+            'id', 'name', 'name_en', 'brand', 'slug',
             'category', 'subcategory',
             # Prix
             'price', 'original_price', 'discount_percent',
             # Etat
             'condition', 'stock', 'is_available',
             # Taille
-            'size', 'size_tag', 'size_recommendation',
+            'size', 'size_tag',
+            'size_recommendation', 'size_recommendation_en',
             # Mesures
             'measure_shoulder', 'measure_chest', 'measure_waist',
             'measure_hips', 'measure_length', 'measure_sleeve',
             # Matiere & details
-            'material', 'details', 'color',
+            'material', 'material_en',
+            'details', 'details_en',
+            'color',
             # Marketing
-            'bullet_1', 'bullet_2', 'bullet_3', 'bullet_4',
-            'description', 'mix_match_tips', 'expert_tip',
+            'bullet_1', 'bullet_1_en',
+            'bullet_2', 'bullet_2_en',
+            'bullet_3', 'bullet_3_en',
+            'bullet_4', 'bullet_4_en',
+            'description', 'description_en',
+            'mix_match_tips', 'mix_match_tips_en',
+            'expert_tip', 'expert_tip_en',
             # Medias
             'images', 'main_image_url',
             # Meta

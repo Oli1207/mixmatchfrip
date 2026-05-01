@@ -1,8 +1,10 @@
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiXCircle } from 'react-icons/fi'
 import './PaymentSuccessScreen.css' // même styles de base
 
 export default function PaymentFailedScreen() {
+  const { t }            = useTranslation()
   const { order_number } = useParams()
 
   return (
@@ -11,17 +13,16 @@ export default function PaymentFailedScreen() {
         <div className="pay-result__icon pay-result__icon--error">
           <FiXCircle size={32}/>
         </div>
-        <h1 className="pay-result__title">Paiement annulé</h1>
+        <h1 className="pay-result__title">{t('payment.cancelled_title')}</h1>
         <p className="pay-result__text">
-          Votre paiement a été annulé. Votre commande
-          <strong> #{order_number}</strong> est en attente — aucun montant n'a été débité.
+          {t('payment.cancelled_text').replace('#{order}', `#${order_number}`)}
         </p>
         <p className="pay-result__text" style={{ fontSize: 13 }}>
-          Vous pouvez réessayer de payer ou retourner à la boutique.
+          {t('payment.cancelled_sub')}
         </p>
         <div className="pay-result__actions">
-          <Link to="/checkout" className="btn-gold">Réessayer le paiement</Link>
-          <Link to="/catalogue" className="btn-dark-outline">Retour à la boutique</Link>
+          <Link to="/checkout" className="btn-gold">{t('payment.retry_payment')}</Link>
+          <Link to="/catalogue" className="btn-dark-outline">{t('payment.back_to_shop')}</Link>
         </div>
       </div>
     </div>

@@ -1,23 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FiFilter, FiX, FiChevronDown, FiChevronUp, FiSearch } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { productsAPI, categoriesAPI } from '../../utils/api'
 import { formatPrice } from '../../utils/currency'
+import { loc } from '../../utils/loc'
 import './CatalogueScreen.css'
 import SEOHead from '../../components/SEOHead'
 
 const SIZES = ['XS','S','M','L','XL','XXL','unique']
-const CONDITIONS = [
-  { value: 'new_with_tags', label: 'Neuf avec étiquette' },
-  { value: 'excellent',     label: 'Excellent état' },
-  { value: 'very_good',     label: 'Très bon état' },
-  { value: 'good',          label: 'Bon état' },
-]
-const SORT_OPTIONS = [
-  { value: 'recent',     label: 'Plus récents' },
-  { value: 'price_asc',  label: 'Prix croissant' },
-  { value: 'price_desc', label: 'Prix décroissant' },
-]
 
 function FilterSection({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -32,30 +23,37 @@ function FilterSection({ title, children, defaultOpen = true }) {
   )
 }
 
-// Fiche produit (card)
 function ProductCard({ product }) {
+  const { t, i18n } = useTranslation()
+  const lng      = i18n.language
   const discount = product.discount_percent
   const imgUrl   = product.main_image_url || 'https://via.placeholder.com/400x500?text=Photo'
+  const name     = loc(product, 'name', lng)
+
+  const CONDITION_LABELS = {
+    new_with_tags: t('catalogue.condition_new_tags'),
+    excellent:     t('catalogue.condition_excellent'),
+    very_good:     t('catalogue.condition_very_good'),
+    good:          t('catalogue.condition_good'),
+  }
 
   return (
     <Link to={`/product/${product.slug}`} className="cat-card">
       <div className="cat-card__img-wrap">
-        <img src={imgUrl} alt={product.name} className="cat-card__img" loading="lazy"/>
+        <img src={imgUrl} alt={name} className="cat-card__img" loading="lazy"/>
         {discount > 0 && <span className="cat-card__badge cat-card__badge--off">-{discount}%</span>}
-        <div className="cat-card__hover-overlay"><span>Voir l'article</span></div>
+        <div className="cat-card__hover-overlay"><span>{t('catalogue.view_item')}</span></div>
       </div>
       <div className="cat-card__info">
         <span className="cat-card__brand">{product.brand}</span>
-        <h3 className="cat-card__name">{product.name}</h3>
+        <h3 className="cat-card__name">{name}</h3>
         <div className="cat-card__meta">
-          <span className="cat-card__tag">Taille {product.size}</span>
-          <span className="cat-card__tag">{product.condition}</span>
+          <span className="cat-card__tag">{t('common.size')} {product.size}</span>
+          <span className="cat-card__tag">{CONDITION_LABELS[product.condition] || product.condition}</span>
         </div>
         <div className="cat-card__prices">
           <span className="cat-card__price">{formatPrice(product.price)}</span>
-          {product.original_price && (
-            <span className="cat-card__original">{formatPrice(product.original_price)}</span>
-          )}
+          {product.original_price && <span className="cat-card__original">{formatPrice(product.original_price)}</span>}
         </div>
       </div>
     </Link>
@@ -63,26 +61,34 @@ function ProductCard({ product }) {
 }
 
 export default function CatalogueScreen() {
+  const { t, i18n } = useTranslation()
+  const lng = i18n.language
   const [searchParams] = useSearchParams()
 
-  // Filters state
+  const CONDITIONS = [
+    { value: 'new_with_tags', label: t('catalogue.condition_new_tags') },
+    { value: 'excellent',     label: t('catalogue.condition_excellent') },
+    { value: 'very_good',     label: t('catalogue.condition_very_good') },
+    { value: 'good',          label: t('catalogue.condition_good') },
+  ]
+  const SORT_OPTIONS = [
+    { value: 'recent',     label: t('catalogue.sort_recent') },
+    { value: 'price_asc',  label: t('catalogue.sort_price_asc') },
+    { value: 'price_desc', label: t('catalogue.sort_price_desc') },
+  ]
+
   const [search,     setSearch]     = useState(searchParams.get('search') || '')
   const [category,   setCategory]   = useState(searchParams.get('category') || '')
   const [sizes,      setSizes]      = useState([])
   const [conditions, setConditions] = useState([])
   const [priceMax,   setPriceMax]   = useState(200)
   const [sort,       setSort]       = useState('recent')
-
-  // Data state
   const [products,   setProducts]   = useState([])
   const [categories, setCategories] = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
-
-  // UI state
   const [mobileFilters, setMobileFilters] = useState(false)
 
-  // Debounce search
   const searchTimer = useRef(null)
   const [debouncedSearch, setDebouncedSearch] = useState(search)
   useEffect(() => {
@@ -91,20 +97,15 @@ export default function CatalogueScreen() {
     return () => clearTimeout(searchTimer.current)
   }, [search])
 
-  // Fetch categories once
   useEffect(() => {
-    categoriesAPI.list()
-      .then(({ data }) => setCategories(data))
-      .catch(() => {})
+    categoriesAPI.list().then(({ data }) => setCategories(data)).catch(() => {})
   }, [])
 
-  // Fetch products when filters change
   useEffect(() => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     const params = {
       ...(category       && { category }),
-      ...(sizes.length   && { size: sizes[0] }),   // backend single-value; multi filtré côté API
+      ...(sizes.length   && { size: sizes[0] }),
       ...(conditions.length && { condition: conditions[0] }),
       ...(priceMax < 200 && { max_price: priceMax }),
       ...(debouncedSearch && { search: debouncedSearch }),
@@ -112,7 +113,7 @@ export default function CatalogueScreen() {
     }
     productsAPI.list(params)
       .then(({ data }) => { setProducts(data); setLoading(false) })
-      .catch(() => { setError('Impossible de charger les produits.'); setLoading(false) })
+      .catch(() => { setError(t('common.error')); setLoading(false) })
   }, [category, sizes, conditions, priceMax, debouncedSearch, sort])
 
   const toggleArr = (arr, setArr, val) =>
@@ -128,26 +129,26 @@ export default function CatalogueScreen() {
     <aside className="cat-filters">
       <div className="cat-filters__head">
         <span className="cat-filters__title">
-          Filtres {activeCount > 0 && <span className="cat-filters__count">{activeCount}</span>}
+          {t('catalogue.filter_btn')} {activeCount > 0 && <span className="cat-filters__count">{activeCount}</span>}
         </span>
-        {activeCount > 0 && <button className="cat-filters__reset" onClick={resetFilters}>Effacer</button>}
+        {activeCount > 0 && <button className="cat-filters__reset" onClick={resetFilters}>{t('catalogue.reset_filters')}</button>}
       </div>
 
-      <FilterSection title="Catégorie">
+      <FilterSection title={t('catalogue.filter_category')}>
         <label className={`cat-filter-radio${!category ? ' active' : ''}`}>
           <input type="radio" name="cat" checked={!category} onChange={() => setCategory('')} />
-          Tout
+          {t('catalogue.all_categories')}
         </label>
         {categories.map(c => (
           <label key={c.slug} className={`cat-filter-radio${category === c.slug ? ' active' : ''}`}>
             <input type="radio" name="cat" checked={category === c.slug} onChange={() => setCategory(c.slug)} />
-            {c.name}
+            {loc(c, 'name', lng)}
             <span className="cat-filter-radio__count">{c.product_count}</span>
           </label>
         ))}
       </FilterSection>
 
-      <FilterSection title="Taille">
+      <FilterSection title={t('catalogue.filter_size')}>
         <div className="cat-filter-sizes">
           {SIZES.map(s => (
             <button key={s} className={`cat-size-btn${sizes.includes(s) ? ' active' : ''}`}
@@ -158,15 +159,15 @@ export default function CatalogueScreen() {
         </div>
       </FilterSection>
 
-      <FilterSection title="Prix max">
+      <FilterSection title={t('catalogue.filter_price')}>
         <div className="cat-filter-price">
           <input type="range" min={10} max={200} value={priceMax}
             onChange={e => setPriceMax(Number(e.target.value))} className="cat-price-range"/>
-          <span className="cat-price-label">Jusqu'à {priceMax} $</span>
+          <span className="cat-price-label">{t('catalogue.filter_price')} {priceMax} $</span>
         </div>
       </FilterSection>
 
-      <FilterSection title="État">
+      <FilterSection title={t('catalogue.filter_condition')}>
         {CONDITIONS.map(c => (
           <label key={c.value} className="cat-filter-check">
             <input type="checkbox" checked={conditions.includes(c.value)}
@@ -178,33 +179,24 @@ export default function CatalogueScreen() {
     </aside>
   )
 
+  const activeCat = categories.find(c => c.slug === category)
   const pageTitle = category
-    ? `${category.charAt(0).toUpperCase() + category.slice(1)} — Catalogue`
-    : 'Catalogue'
-  const pageDesc = `Parcourez notre sélection de vêtements seconde main${category ? ` — ${category}` : ''}. ${products.length} article${products.length > 1 ? 's' : ''} disponible${products.length > 1 ? 's' : ''}, livraison partout au Canada.`
+    ? `${loc(activeCat, 'name', lng) || (category.charAt(0).toUpperCase() + category.slice(1))} — ${t('catalogue.title')}`
+    : t('catalogue.title')
+  const pageDesc = `${products.length} article${products.length > 1 ? 's' : ''} disponible${products.length > 1 ? 's' : ''}, livraison partout au Canada.`
 
   return (
     <div className="cat-page">
-      <SEOHead
-        title={pageTitle}
-        description={pageDesc}
-        url={`/catalogue${category ? `?category=${category}` : ''}`}
-        schema={{
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: `${pageTitle} — MixMatchFrip`,
-          description: pageDesc,
-          url: `https://mixmatchfrip.com/catalogue`,
-        }}
-      />
-      {/* Header */}
+      <SEOHead title={pageTitle} description={pageDesc}
+        url={`/catalogue${category ? `?category=${category}` : ''}`} />
+
       <div className="cat-header">
         <div className="cat-header__inner">
           <div>
             <h1 className="cat-header__title">
               {category
-                ? categories.find(c => c.slug === category)?.name || 'Boutique'
-                : 'Boutique'}
+                ? loc(categories.find(c => c.slug === category), 'name', lng) || t('catalogue.title')
+                : t('catalogue.title')}
             </h1>
             <p className="cat-header__count">
               {loading ? '...' : `${products.length} article${products.length > 1 ? 's' : ''}`}
@@ -213,14 +205,14 @@ export default function CatalogueScreen() {
           <div className="cat-header__right">
             <div className="cat-search-wrap">
               <FiSearch size={15} className="cat-search-ico"/>
-              <input type="text" placeholder="Rechercher…" className="cat-search-input"
+              <input type="text" placeholder={t('catalogue.search_placeholder')} className="cat-search-input"
                 value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <select className="cat-sort" value={sort} onChange={e => setSort(e.target.value)}>
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
             <button className="cat-filter-btn-mobile" onClick={() => setMobileFilters(true)}>
-              <FiFilter size={15}/> Filtres {activeCount > 0 && <span className="cat-filters__count">{activeCount}</span>}
+              <FiFilter size={15}/> {t('catalogue.filter_btn')} {activeCount > 0 && <span className="cat-filters__count">{activeCount}</span>}
             </button>
           </div>
         </div>
@@ -228,23 +220,20 @@ export default function CatalogueScreen() {
 
       <div className="cat-body">
         <div className="cat-filters-desktop"><FiltersPanel /></div>
-
         <div className="cat-grid-wrap">
           {loading ? (
             <div className="cat-loading">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="cat-skeleton" />
-              ))}
+              {Array.from({ length: 6 }).map((_, i) => <div key={i} className="cat-skeleton" />)}
             </div>
           ) : error ? (
             <div className="cat-empty">
               <p>{error}</p>
-              <button className="btn-dark-outline" onClick={resetFilters}>Réessayer</button>
+              <button className="btn-dark-outline" onClick={resetFilters}>{t('catalogue.reset_filters')}</button>
             </div>
           ) : products.length === 0 ? (
             <div className="cat-empty">
-              <p>Aucun article ne correspond à vos filtres.</p>
-              <button className="btn-dark-outline" onClick={resetFilters}>Réinitialiser les filtres</button>
+              <p>{t('catalogue.no_results')}</p>
+              <button className="btn-dark-outline" onClick={resetFilters}>{t('catalogue.reset_filters')}</button>
             </div>
           ) : (
             <div className="cat-grid">
@@ -254,19 +243,18 @@ export default function CatalogueScreen() {
         </div>
       </div>
 
-      {/* Mobile filters drawer */}
       {mobileFilters && (
         <div className="cat-mobile-filters">
           <div className="cat-mobile-filters__backdrop" onClick={() => setMobileFilters(false)}/>
           <div className="cat-mobile-filters__panel">
             <div className="cat-mobile-filters__head">
-              <span className="cat-filters__title">Filtres</span>
+              <span className="cat-filters__title">{t('catalogue.filter_btn')}</span>
               <button onClick={() => setMobileFilters(false)}><FiX size={20}/></button>
             </div>
             <div className="cat-mobile-filters__body"><FiltersPanel /></div>
             <div className="cat-mobile-filters__foot">
               <button className="btn-gold" style={{width:'100%'}} onClick={() => setMobileFilters(false)}>
-                Voir {products.length} article{products.length > 1 ? 's' : ''}
+                {products.length} article{products.length > 1 ? 's' : ''}
               </button>
             </div>
           </div>

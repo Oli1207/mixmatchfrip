@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiCheck, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { ordersAPI } from '../../utils/api'
 import { events as analyticsEvents } from '../../analytics/analytics'
 import './PaymentSuccessScreen.css'
 
 export default function PaymentSuccessScreen() {
-  const { order_number }          = useParams()
-  const [searchParams]            = useSearchParams()
-  const session_id                = searchParams.get('session_id')
+  const { t }                      = useTranslation()
+  const { order_number }           = useParams()
+  const [searchParams]             = useSearchParams()
+  const session_id                 = searchParams.get('session_id')
 
   const [status,  setStatus]  = useState('loading') // 'loading' | 'success' | 'error'
   const [order,   setOrder]   = useState(null)
@@ -17,7 +19,7 @@ export default function PaymentSuccessScreen() {
   useEffect(() => {
     if (!session_id || !order_number) {
       setStatus('error')
-      setMessage('Paramètres manquants.')
+      setMessage(t('payment.error_params'))
       return
     }
 
@@ -28,7 +30,7 @@ export default function PaymentSuccessScreen() {
         analyticsEvents.purchase(data.order_number, data.total, data.item_count ?? 1)
       })
       .catch(err => {
-        const detail = err?.response?.data?.detail || 'Erreur lors de la vérification du paiement.'
+        const detail = err?.response?.data?.detail || t('payment.error_verification')
         setMessage(detail)
         setStatus('error')
       })
@@ -39,7 +41,7 @@ export default function PaymentSuccessScreen() {
       <div className="pay-result">
         <div className="pay-result__card">
           <div className="pay-result__spinner"><FiLoader size={32}/></div>
-          <p>Vérification du paiement…</p>
+          <p>{t('payment.verifying')}</p>
         </div>
       </div>
     )
@@ -50,14 +52,13 @@ export default function PaymentSuccessScreen() {
       <div className="pay-result">
         <div className="pay-result__card">
           <div className="pay-result__icon pay-result__icon--error"><FiAlertCircle size={32}/></div>
-          <h1 className="pay-result__title">Une erreur est survenue</h1>
+          <h1 className="pay-result__title">{t('payment.error_title')}</h1>
           <p className="pay-result__text">{message}</p>
           <p className="pay-result__text" style={{ fontSize: 13 }}>
-            Si vous avez été débité, conservez votre référence de commande
-            <strong> #{order_number}</strong> et contactez-nous.
+            {t('payment.error_ref').replace('#{order}', `#${order_number}`)}
           </p>
           <div className="pay-result__actions">
-            <Link to="/" className="btn-dark-outline">Retour à l'accueil</Link>
+            <Link to="/" className="btn-dark-outline">{t('payment.back_home')}</Link>
           </div>
         </div>
       </div>
@@ -68,29 +69,28 @@ export default function PaymentSuccessScreen() {
     <div className="pay-result">
       <div className="pay-result__card">
         <div className="pay-result__icon pay-result__icon--success"><FiCheck size={32}/></div>
-        <h1 className="pay-result__title">Commande confirmée !</h1>
+        <h1 className="pay-result__title">{t('payment.success_title')}</h1>
         <p className="pay-result__text">
-          Merci pour votre achat. Votre commande
-          <strong> #{order?.order_number}</strong> a bien été reçue et votre
-          paiement est confirmé. Un email de confirmation a été envoyé à
-          <strong> {order?.email}</strong>.
+          {t('payment.success_text')
+            .replace('#{order}', `#${order?.order_number}`)
+            .replace('{email}', order?.email || '')}
         </p>
 
         {order && (
           <div className="pay-result__summary">
             <div className="pay-result__summary-row">
-              <span>Livraison</span>
+              <span>{t('payment.shipping_label')}</span>
               <span>{order.first_name} {order.last_name} — {order.city}</span>
             </div>
             <div className="pay-result__summary-row pay-result__summary-row--total">
-              <span>Total payé</span>
+              <span>{t('payment.total_paid')}</span>
               <span>{parseFloat(order.total).toFixed(2)} $</span>
             </div>
           </div>
         )}
 
         <div className="pay-result__actions">
-          <Link to="/catalogue" className="btn-gold">Continuer les achats</Link>
+          <Link to="/catalogue" className="btn-gold">{t('payment.continue_btn')}</Link>
         </div>
       </div>
     </div>

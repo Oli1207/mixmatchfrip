@@ -372,8 +372,8 @@
     <p><strong>Version</strong> — V1 Production</p>
     <p><strong>Stack</strong> — React · Django · PostgreSQL</p>
     <p><strong>Paiement</strong> — Stripe</p>
-    <p><strong>Livraison</strong> — Chit Chats / Canada Post</p>
-    <p style="margin-top:12px; color:#888;">2025 — Confidentiel</p>
+    <p><strong>Livraison</strong> — Chit Chats</p>
+    <p style="margin-top:12px; color:#888;">2026 — Confidentiel</p>
   </div>
 </div>
 
@@ -410,7 +410,7 @@
   <div class="toc-section">
     <p class="toc-section__title">📦 Logistique</p>
     <ul class="toc-items">
-      <li>Calcul des frais de port Canada Post</li>
+      <li>Calcul des frais de port Chit Chats</li>
       <li>Création automatique de l'envoi Chit Chats</li>
       <li>Codes promo</li>
       <li>Newsletter</li>
@@ -660,9 +660,6 @@
     </table>
   </div>
 
-  <div class="infobox">
-    <strong>Anti-cache :</strong> La vue panier côté Django est décorée avec <code>@never_cache</code> pour que les données soient toujours fraîches, même après un retour arrière navigateur.
-  </div>
 
   <div class="chapter-footer">
     <span>MixMatchFrip — Guide des fonctionnalités</span>
@@ -692,7 +689,7 @@
     <h3>Étape 1 — Adresse de livraison</h3>
     <ul class="steps">
       <li>La cliente saisit son prénom, nom, email, téléphone, adresse complète, ville, province et code postal.</li>
-      <li>Dès que le code postal est saisi (6 caractères), les <strong>tarifs Canada Post</strong> sont automatiquement récupérés via Chit Chats. Un délai de 600 ms évite les appels inutiles pendant la frappe.</li>
+      <li>Dès que le code postal est saisi (6 caractères), les tarifs de livraison sont automatiquement récupérés via Chit Chats. Un délai de 600 ms évite les appels inutiles pendant la frappe.</li>
       <li>Les options de livraison s'affichent avec leur délai estimé et leur prix. La première option est pré-sélectionnée.</li>
       <li>Si la cliente est connectée, ses informations sont pré-remplies depuis son profil.</li>
       <li>Option « Créer un compte » pour les invités — crée automatiquement un compte avec les infos saisies.</li>
@@ -703,9 +700,9 @@
     <h3>Étape 2 — Paiement</h3>
     <ul class="steps">
       <li>Récapitulatif de la commande avec les articles, sous-total, remise promo éventuelle, frais de port et total.</li>
-      <li>Champ code promo avec validation en temps réel contre l'API.</li>
+      <li>Champ code promo avec validation en temps réel.</li>
       <li>Au clic sur « Payer », la commande est créée en base, puis une session Stripe est générée.</li>
-      <li>La cliente est redirigée vers la <strong>page Stripe hébergée</strong> (sécurisé, certifié PCI-DSS). Ses données bancaires ne transitent jamais par nos serveurs.</li>
+      <li>La cliente est redirigée vers la <strong>page Stripe</strong> (sécurisé, certifié PCI-DSS). Ses données bancaires ne transitent jamais par nos serveurs.</li>
     </ul>
   </div>
 
@@ -738,7 +735,7 @@
     <ul class="steps">
       <li><strong>Création commande :</strong> La commande est enregistrée en base avec le statut <code>pending</code>.</li>
       <li><strong>Session Stripe :</strong> Le backend crée une Checkout Session Stripe avec le montant exact, les articles et les URLs de retour.</li>
-      <li><strong>Redirection :</strong> La cliente est envoyée sur la page Stripe hébergée (paiement par carte, Apple Pay, Google Pay…).</li>
+      <li><strong>Redirection :</strong> La cliente est envoyée sur la page Stripe (paiement par carte, Apple Pay, Google Pay…).</li>
       <li><strong>Retour succès :</strong> Stripe redirige vers <code>/payment-success/{order_number}?session_id=…</code>. Le backend vérifie auprès de Stripe que le paiement est bien <code>paid</code> avant de confirmer.</li>
       <li><strong>Retour échec :</strong> Stripe redirige vers <code>/payment-failed/{order_number}</code>. La commande reste en <code>pending</code>, la cliente peut réessayer.</li>
     </ul>
@@ -747,16 +744,16 @@
   <div class="section">
     <h3>Flux Chit Chats (livraison)</h3>
     <ul class="steps">
-      <li><strong>Calcul des tarifs :</strong> Au moment de la saisie du code postal, un <em>shipment temporaire</em> est créé dans Chit Chats pour obtenir les prix Canada Post, puis immédiatement supprimé. <strong>Aucun frais n'est engagé à ce stade.</strong></li>
+      <li><strong>Calcul des tarifs :</strong> Au moment de la saisie du code postal, un <em>shipment temporaire</em> est créé dans Chit Chats pour obtenir les prix de livraison, puis immédiatement supprimé. <strong>Aucun frais n'est engagé à ce stade.</strong></li>
       <li><strong>Après paiement confirmé :</strong> Un shipment <em>permanent</em> est créé dans Chit Chats avec les vraies informations de la commande (adresse, poids, valeur déclarée, méthode choisie).</li>
       <li><strong>Shipment ID :</strong> L'identifiant Chit Chats est sauvegardé sur la commande en base (<code>shipment_id</code>).</li>
-      <li><strong>Email de confirmation :</strong> L'URL de suivi Canada Post est incluse dans l'email (<code>https://www.canadapost-postescanada.ca/track-reperage/fr#/search?searchFor={tracking_number}</code>). La cliente reçoit un bouton cliquable pour suivre son colis dès que le numéro est disponible.</li>
+      <li><strong>Email de confirmation :</strong> L'URL de suivi Chit Chats est incluse dans l'email. La cliente reçoit un bouton cliquable pour suivre son colis dès que le numéro est disponible.</li>
     </ul>
   </div>
 
-  <div class="infobox">
+  <!-- <div class="infobox">
     <strong>Sécurité :</strong> La vérification du paiement se fait TOUJOURS côté serveur via l'API Stripe, jamais sur la base d'un paramètre URL qui pourrait être falsifié. Si Stripe dit <code>payment_status != paid</code>, la commande n'est pas confirmée.
-  </div>
+  </div> -->
 
   <div class="chapter-footer">
     <span>MixMatchFrip — Guide des fonctionnalités</span>
@@ -807,7 +804,7 @@
 
   <div class="section no-break">
     <h3>Création de compte automatique au checkout</h3>
-    <p>Lors d'une commande invité, une case à cocher « Créer un compte » est proposée. Si cochée, un compte est créé automatiquement avec l'email et le nom saisis dans le formulaire de livraison. Le mot de passe temporaire est envoyé par email.</p>
+    <p>Lors d'une commande "invité", une case à cocher « Créer un compte » est proposée. Si cochée, un compte est créé automatiquement avec l'email et le nom saisis dans le formulaire de livraison. Le mot de passe temporaire est envoyé par email.</p>
   </div>
 
   <div class="chapter-footer">
@@ -844,7 +841,7 @@
     <ul class="steps">
       <li>À l'étape 2 du checkout (paiement), un champ « Code promo » est affiché.</li>
       <li>La cliente saisit son code et clique « Appliquer ».</li>
-      <li>L'API vérifie : code valide, actif, sous le plafond d'utilisation, montant minimum respecté.</li>
+      <li>Le serveur vérifie : code valide, actif, sous le plafond d'utilisation, montant minimum respecté.</li>
       <li>La remise s'affiche instantanément sur le récapitulatif. Le compteur d'utilisation s'incrémente à la validation de la commande.</li>
     </ul>
   </div>
@@ -858,7 +855,7 @@
 
   <div class="section no-break">
     <h3>Newsletter — gestion admin</h3>
-    <p>Dans le tableau de bord : <strong>Newsletter</strong> → liste complète des abonnées avec date d'inscription. Possibilité de supprimer une entrée (désinscription manuelle). Export CSV possible pour envoi via Mailchimp, Klaviyo ou tout autre outil d'emailing.</p>
+    <p>Dans le tableau de bord : <strong>Newsletter</strong> → liste complète des abonnées avec date d'inscription. Possibilité de supprimer une entrée (désinscription manuelle). Export CSV possible pour envoi via tout outil d'emailing.</p>
   </div>
 
   <div class="chapter-footer">
@@ -866,7 +863,7 @@
     <span>Promo &amp; Newsletter · Chapitre 08</span>
   </div>
 </div>
-
+<br> <br> <br> <br> <br> <br> <br> <br>
 <!-- ════════════════════════════════════════════════════════════════════════
      09. TABLEAU DE BORD ADMIN
 ════════════════════════════════════════════════════════════════════════ -->
@@ -909,7 +906,7 @@
       <tbody>
         <tr><td>pending</td><td>Commande créée, paiement non encore confirmé</td></tr>
         <tr><td>paid</td><td>Paiement Stripe confirmé, envoi Chit Chats créé</td></tr>
-        <tr><td>shipped</td><td>Colis remis à Chit Chats / Canada Post</td></tr>
+        <tr><td>shipped</td><td>Colis remis à Chit Chats</td></tr>
         <tr><td>delivered</td><td>Livraison confirmée</td></tr>
         <tr><td>cancelled</td><td>Commande annulée</td></tr>
         <tr><td>refunded</td><td>Remboursement effectué</td></tr>
@@ -962,7 +959,7 @@
         <tr><td>condition</td><td><span class="tag tag--red">Oui</span></td><td>État : neuf, excellent, très bon, bon</td></tr>
         <tr><td>size / size_tag</td><td><span class="tag tag--red">Oui</span></td><td>Taille standard + étiquette physique</td></tr>
         <tr><td>price / original_price</td><td><span class="tag tag--red">Oui</span></td><td>Prix actuel / prix barré (si promo)</td></tr>
-        <tr><td>weight_g</td><td><span class="tag tag--gold">Recommandé</span></td><td>Pour calculer les frais Canada Post (défaut : 400g)</td></tr>
+        <tr><td>weight_g</td><td><span class="tag tag--gold">Recommandé</span></td><td>Pour calculer les frais Chit Chats (défaut : 400g)</td></tr>
         <tr><td>measures (6 champs)</td><td><span class="tag tag--blue">Optionnel</span></td><td>Mesures à plat en cm</td></tr>
         <tr><td>description / bullets</td><td><span class="tag tag--gold">Recommandé</span></td><td>Conversion : arguments de vente</td></tr>
         <tr><td>mix_match_tips</td><td><span class="tag tag--blue">Optionnel</span></td><td>Idées tenues (une par ligne, commencer par -)</td></tr>
@@ -986,7 +983,7 @@
     <div class="chapter-title-block">
       <p class="chapter-eyebrow">Marketing &amp; Data</p>
       <h2 class="chapter-title">Système d'analytiques</h2>
-      <p class="chapter-desc">Tableau de bord Google-Analytics-like maison. Aucune dépendance externe, données 100% privées, 100% vôtres.</p>
+      <p class="chapter-desc">Tableau de bord. Aucune dépendance externe, données 100% privées, 100% vôtres.</p>
     </div>
   </div>
 
@@ -1047,7 +1044,7 @@
   <div class="section no-break">
     <h3>Utiliser les paramètres UTM (pour les publications Instagram/ads)</h3>
     <ul class="steps">
-      <li>Construire un lien avec les paramètres UTM, ex : <code>https://mixmatchfrip.ca/?utm_source=instagram&amp;utm_medium=story&amp;utm_campaign=soldes_ete_2025</code></li>
+      <li>Construire un lien avec les paramètres UTM, ex : <code>https://mixmatchfrip.com/?utm_source=instagram&amp;utm_medium=story&amp;utm_campaign=soldes_ete_2026</code></li>
       <li>Publier ce lien dans la bio Instagram, les stories, les publicités Meta, les emails…</li>
       <li>Dans le dashboard analytiques, la section « Campagnes UTM » montre combien de sessions et d'achats ce lien a générés.</li>
       <li>Comparer les campagnes pour identifier les canaux les plus rentables.</li>
@@ -1146,7 +1143,7 @@
       </div>
       <div class="feat-card">
         <p class="feat-card__title">Backend — Django 5 + DRF</p>
-        <p>Django REST Framework · SimpleJWT (auth tokens) · PostgreSQL · Cloudinary (images) · Stripe SDK · API Chit Chats</p>
+        <p>Django REST Framework · SimpleJWT (auth tokens) · PostgreSQL · Stripe SDK · API Chit Chats</p>
       </div>
       <div class="feat-card">
         <p class="feat-card__title">Paiement</p>
@@ -1154,7 +1151,7 @@
       </div>
       <div class="feat-card">
         <p class="feat-card__title">Livraison</p>
-        <p>Chit Chats API pour les tarifs Canada Post en temps réel et la création automatique des envois.</p>
+        <p>Chit Chats API pour les tarifs de livraison en temps réel et la création automatique des envois.</p>
       </div>
       <div class="feat-card">
         <p class="feat-card__title">Email</p>
@@ -1186,7 +1183,7 @@
 
   <div class="chapter-footer" style="margin-top:48px;">
     <span>MixMatchFrip — Guide des fonctionnalités V1</span>
-    <span>© 2025 — Tous droits réservés</span>
+    <span>© 2026 — Tous droits réservés</span>
   </div>
 </div>
 

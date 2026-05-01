@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import './PolicyScreen.css'
 import SEOHead from '../../components/SEOHead'
 
@@ -95,6 +96,7 @@ Cette politique est susceptible d'être mise à jour. En cas de modification sub
 ]
 
 export default function PolicyScreen() {
+  const { t } = useTranslation()
   const scrollTo = (id) => {
     const el = document.getElementById(id)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -110,7 +112,7 @@ export default function PolicyScreen() {
   return (
     <div className="policy-page">
       <SEOHead
-        title="Politique de confidentialité"
+        title={t('policy.title')}
         description="Comment MixMatchFrip collecte, utilise et protège vos données personnelles. Conformité LPRPDE. Vos droits et comment nous contacter."
         url="/policy"
         noindex={true}
@@ -119,13 +121,10 @@ export default function PolicyScreen() {
       {/* Header */}
       <div className="policy-header">
         <div className="policy-header__inner">
-          <p className="policy-header__tag">Légal</p>
-          <h1 className="policy-header__title">Politique de confidentialité</h1>
-          <p className="policy-header__sub">
-            Chez MixMatchFrip, la protection de vos données personnelles est une priorité.
-            Voici comment nous les collectons, utilisons et protégeons.
-          </p>
-          <p className="policy-header__date">Dernière mise à jour : avril 2026</p>
+          <p className="policy-header__tag">{t('policy.legal_tag')}</p>
+          <h1 className="policy-header__title">{t('policy.title')}</h1>
+          <p className="policy-header__sub">{t('policy.subtitle')}</p>
+          <p className="policy-header__date">{t('policy.updated_date')}</p>
         </div>
       </div>
 
@@ -135,7 +134,7 @@ export default function PolicyScreen() {
 
           {/* Table of contents */}
           <aside className="policy-toc">
-            <p className="policy-toc__title">Sommaire</p>
+            <p className="policy-toc__title">{t('policy.toc')}</p>
             <ul className="policy-toc__list">
               {SECTIONS.map(s => (
                 <li key={s.id}>
@@ -159,7 +158,7 @@ export default function PolicyScreen() {
             ))}
 
             <div className="policy-footer-note">
-              <p>Des questions ? <Link to="/contact" className="policy-link">Contactez-nous</Link> — nous répondons sous 24h.</p>
+              <p>{t('policy.questions_text')} <Link to="/contact" className="policy-link">{t('policy.contact_us')}</Link>{t('policy.contact_response')}</p>
             </div>
           </main>
 
