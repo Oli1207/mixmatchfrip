@@ -35,10 +35,13 @@ from .serializers import (
 )
 
 SHIPPING_COSTS = {
-    'standard': 4.99,
-    'express':  12.99,
-    'pickup':   0.00,
+    'standard':       4.99,
+    'express':        12.99,
+    'local_delivery': 10.00,
+    'accumulate':     0.00,
+    'pickup':         0.00,   # conservé pour les anciennes commandes
 }
+FREE_SHIPPING_THRESHOLD = 75.00   # livraison gratuite standard dès 75$ CAD (toutes provinces)
 
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
@@ -306,7 +309,7 @@ def order_create(request):
     data            = serializer.validated_data
     shipping_method = data['shipping_method']
     shipping_cost   = float(data.get('shipping_cost', 0))
-    if shipping_method == 'pickup':
+    if shipping_method in ('pickup', 'accumulate'):
         shipping_cost = 0.00
     subtotal        = float(cart.subtotal)
     tax             = 0.0
@@ -566,8 +569,8 @@ def _create_chitchats_shipment(order):
     client_id = getattr(settings, 'CHITCHATS_CLIENT_ID', None)
     if not token or not client_id:
         return None
-    if order.shipping_method == 'pickup':
-        return None
+    if order.shipping_method in ('pickup', 'local_delivery', 'accumulate'):
+        return None   # pas d'expédition Chit Chats pour ces modes
 
     # Mapping nom de province → code ISO
     _PROV = {
@@ -707,14 +710,17 @@ def shipping_rates(request):
                     status=status.HTTP_502_BAD_GATEWAY,
                 )
 
-    return Response(_static_shipping_rates())
+    return Response(_static_shipping_rates(cart_value=cart_value))
 
 
-def _static_shipping_rates():
+def _static_shipping_rates(cart_value=None):
+    standard_price = 0.00 if (cart_value and float(cart_value) >= FREE_SHIPPING_THRESHOLD) else 4.99
+    standard_name  = 'Chit Chats Standard — 5 a 7 jours' + (' — Gratuit' if standard_price == 0.00 else '')
     return [
-        {'code': 'chit_chats_canada_tracked',  'name': 'Chit Chats Standard — 5 a 7 jours', 'price': 4.99,  'days': '5-7'},
-        {'code': 'chit_chats_canada_priority',  'name': 'Chit Chats Prioritaire — 2 a 3 jours', 'price': 12.99, 'days': '2-3'},
-        {'code': 'pickup',                       'name': 'Retrait en magasin — Gratuit',         'price': 0.00,  'days': '0'},
+        {'code': 'chit_chats_canada_tracked',  'name': standard_name,                              'price': standard_price, 'days': '5-7'},
+        {'code': 'chit_chats_canada_priority', 'name': 'Chit Chats Prioritaire — 2 a 3 jours',    'price': 12.99,          'days': '2-3'},
+        {'code': 'local_delivery',             'name': 'Livraison locale — Gatineau-Ottawa',       'price': 10.00,          'days': '1-2'},
+        {'code': 'accumulate',                 'name': 'Mise de cote / Accumule — Sans frais',     'price': 0.00,           'days': None},
     ]
 
 
@@ -839,11 +845,22 @@ def _get_chitchats_rates(destination_postal, weight_g, token, client_id, cart_va
         label = f'{description} — {delivery_desc}' if delivery_desc else description
         rates.append({'code': postage_type, 'name': label, 'price': price, 'days': days})
 
-    # Trier par prix croissant
+    # Livraison gratuite standard pour toutes les provinces d\u00e8s 75$ CAD
+    if cart_value:
+        try:
+            if float(cart_value) >= FREE_SHIPPING_THRESHOLD and rates:
+                rates[0]['price'] = 0.00
+                if '\u2014 Gratuit' not in rates[0]['name']:
+                    rates[0]['name'] += ' \u2014 Gratuit'
+        except (ValueError, TypeError):
+            pass
+
+    # Trier par prix croissant (hors options sp\u00e9ciales)
     rates.sort(key=lambda x: x['price'])
 
-    # Ajouter retrait en magasin
-    rates.append({'code': 'pickup', 'name': 'Retrait en magasin \u2014 Gratuit', 'price': 0.00, 'days': '0'})
+    # Options locales ajout\u00e9es apr\u00e8s les tarifs Chit Chats
+    rates.append({'code': 'local_delivery', 'name': 'Livraison locale \u2014 Gatineau-Ottawa', 'price': 10.00, 'days': '1-2'})
+    rates.append({'code': 'accumulate',     'name': 'Mise de c\u00f4t\u00e9 / Accumul\u00e9 \u2014 Sans frais', 'price': 0.00,  'days': None})
     return rates
 
 

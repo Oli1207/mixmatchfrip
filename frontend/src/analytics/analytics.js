@@ -134,4 +134,17 @@ export const events = {
 
   newsletterSub: () =>
     track('newsletter_sub', {}),
+
+  /**
+   * Déclenché quand un code promo est appliqué avec succès.
+   * @param {string} code           — ex: 'ETE20'
+   * @param {number} discountAmount — montant réduit en $
+   * @param {string} [trigger]      — 'manual' | 'url_auto'
+   */
+  promoApplied: (code, discountAmount, trigger = 'manual') =>
+    track('promo_applied', {
+      promo_code:      code,
+      discount_amount: discountAmount,
+      trigger,
+    }),
 }

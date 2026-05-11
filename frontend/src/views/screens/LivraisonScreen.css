@@ -91,6 +91,13 @@
   font-weight: 600;
   margin: 0;
 }
+.livraison-option__note {
+  font-size: 11px;
+  color: var(--gray-text);
+  font-style: italic;
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
 
 /* Steps */
 .livraison-steps {
@@ -202,6 +209,12 @@
   color: var(--gold);
   font-weight: 700;
   font-size: 12px;
+}
+.livraison-returns__intro {
+  font-size: 14px;
+  color: var(--dark);
+  line-height: 1.7;
+  margin: 0 0 4px;
 }
 .livraison-returns__note {
   font-size: 13px;

@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiPackage, FiZap, FiMapPin } from 'react-icons/fi'
+import { FiPackage, FiZap, FiMapPin, FiArchive } from 'react-icons/fi'
 import './LivraisonScreen.css'
 import SEOHead from '../../components/SEOHead'
 
 const ZONES = [
-  { province: 'Québec',              standard: '5-7 j',   express: '2-3 j', standardPrice: 'Gratuit (>75$) / 4.99$ CAD', expressPrice: '12.99$ CAD' },
-  { province: 'Ontario',             standard: '5-7 j',   express: '2-3 j', standardPrice: '6.99$ CAD',                   expressPrice: '14.99$ CAD' },
-  { province: 'Colombie-Brit.',      standard: '7-10 j',  express: '3-5 j', standardPrice: '8.99$ CAD',                   expressPrice: '17.99$ CAD' },
-  { province: 'Provinces Atlantique', standard: '7-10 j', express: '3-5 j', standardPrice: '8.99$ CAD',                   expressPrice: '17.99$ CAD' },
-  { province: 'Prairies & Alberta',  standard: '7-10 j',  express: '3-5 j', standardPrice: '7.99$ CAD',                   expressPrice: '15.99$ CAD' },
+  { province: 'Québec',               standard: '5-7 j',  express: '2-3 j', standardPrice: 'Gratuit (>75$) / 4.99$ CAD', expressPrice: '12.99$ CAD' },
+  { province: 'Ontario',              standard: '5-7 j',  express: '2-3 j', standardPrice: 'Gratuit (>75$) / 6.99$ CAD', expressPrice: '14.99$ CAD' },
+  { province: 'Colombie-Brit.',       standard: '7-10 j', express: '3-5 j', standardPrice: 'Gratuit (>75$) / 8.99$ CAD', expressPrice: '17.99$ CAD' },
+  { province: 'Provinces Atlantique', standard: '7-10 j', express: '3-5 j', standardPrice: 'Gratuit (>75$) / 8.99$ CAD', expressPrice: '17.99$ CAD' },
+  { province: 'Prairies & Alberta',   standard: '7-10 j', express: '3-5 j', standardPrice: 'Gratuit (>75$) / 7.99$ CAD', expressPrice: '15.99$ CAD' },
 ]
 
 export default function LivraisonScreen() {
@@ -26,7 +26,7 @@ export default function LivraisonScreen() {
     <div className="livraison-page">
       <SEOHead
         title={t('shipping_page.title')}
-        description="Informations sur la livraison MixMatchFrip : délais, tarifs par province, politique de retour sous 48h. Livraison standard et express partout au Canada."
+        description="Livraison MixMatchFrip : standard, express, livraison locale Gatineau-Ottawa et option Accumulé. Livraison gratuite dès 75$ partout au Canada."
         url="/livraison"
       />
       <div className="livraison-header">
@@ -38,11 +38,14 @@ export default function LivraisonScreen() {
       </div>
 
       <div className="livraison-body">
+
         {/* Options */}
         <section className="livraison-section">
           <div className="livraison-section__inner">
             <h2 className="livraison-section__title">{t('shipping_page.options_title')}</h2>
             <div className="livraison-options">
+
+              {/* Standard */}
               <div className="livraison-option">
                 <span className="livraison-option__icon"><FiPackage size={22}/></span>
                 <div>
@@ -51,6 +54,8 @@ export default function LivraisonScreen() {
                   <p className="livraison-option__price">{t('shipping_page.standard_price')}</p>
                 </div>
               </div>
+
+              {/* Express */}
               <div className="livraison-option">
                 <span className="livraison-option__icon"><FiZap size={22}/></span>
                 <div>
@@ -59,14 +64,29 @@ export default function LivraisonScreen() {
                   <p className="livraison-option__price">{t('shipping_page.express_price')}</p>
                 </div>
               </div>
+
+              {/* Livraison locale */}
               <div className="livraison-option">
                 <span className="livraison-option__icon"><FiMapPin size={22}/></span>
                 <div>
-                  <h3 className="livraison-option__name">{t('shipping_page.pickup_name')}</h3>
-                  <p className="livraison-option__desc">{t('shipping_page.pickup_desc')}</p>
-                  <p className="livraison-option__price"><strong>{t('shipping_page.pickup_price')}</strong></p>
+                  <h3 className="livraison-option__name">{t('shipping_page.local_name')}</h3>
+                  <p className="livraison-option__desc">{t('shipping_page.local_desc')}</p>
+                  <p className="livraison-option__price"><strong>{t('shipping_page.local_price')}</strong></p>
+                  <p className="livraison-option__note">{t('shipping_page.local_note')}</p>
                 </div>
               </div>
+
+              {/* Accumulé */}
+              <div className="livraison-option">
+                <span className="livraison-option__icon"><FiArchive size={22}/></span>
+                <div>
+                  <h3 className="livraison-option__name">{t('shipping_page.accumulate_name')}</h3>
+                  <p className="livraison-option__desc">{t('shipping_page.accumulate_desc')}</p>
+                  <p className="livraison-option__price"><strong>{t('shipping_page.accumulate_price')}</strong></p>
+                  <p className="livraison-option__note">{t('shipping_page.accumulate_note')}</p>
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
@@ -118,20 +138,19 @@ export default function LivraisonScreen() {
           </div>
         </section>
 
-        {/* Returns */}
+        {/* Politique de remboursement */}
         <section className="livraison-section livraison-section--cream">
           <div className="livraison-section__inner livraison-returns">
             <div>
               <h2 className="livraison-section__title">{t('shipping_page.returns_policy_title')}</h2>
-              <ul className="livraison-returns__list">
-                <li>{t('shipping_page.return_48h')}</li>
-                <li>{t('shipping_page.return_original')}</li>
-                <li>{t('shipping_page.return_label')}</li>
-                <li>{t('shipping_page.return_refund')}</li>
-                <li>{t('shipping_page.return_free')}</li>
-              </ul>
-              <p className="livraison-returns__note">
-                {t('shipping_page.return_contact_pre')} <a href="mailto:support@mixmatchfrip.com">support@mixmatchfrip.com</a> {t('shipping_page.return_contact_post')}
+              <p className="livraison-returns__intro">{t('shipping_page.return_policy_intro')}</p>
+              <p className="livraison-returns__note" style={{ marginTop: '12px' }}>
+                {t('shipping_page.return_defect_note')}
+              </p>
+              <p className="livraison-returns__note" style={{ marginTop: '12px' }}>
+                {t('shipping_page.return_contact_pre')}{' '}
+                <a href="mailto:support@mixmatchfrip.com">support@mixmatchfrip.com</a>{' '}
+                {t('shipping_page.return_contact_post')}
               </p>
             </div>
             <div className="livraison-returns__cta">
@@ -141,6 +160,7 @@ export default function LivraisonScreen() {
             </div>
           </div>
         </section>
+
       </div>
     </div>
   )

@@ -330,9 +330,11 @@ ORDER_STATUS = [
 ]
 
 SHIPPING_METHOD = [
-    ('standard', 'Standard (5-7 jours)'),
-    ('express',  'Express (2-3 jours)'),
-    ('pickup',   'Retrait en magasin'),
+    ('standard',       'Standard (5-7 jours)'),
+    ('express',        'Express (2-3 jours)'),
+    ('local_delivery', 'Livraison locale (Gatineau-Ottawa)'),
+    ('accumulate',     'Mise de côté / Accumulé'),
+    ('pickup',         'Retrait en magasin'),   # conservé pour les anciennes commandes
 ]
 
 
@@ -454,6 +456,7 @@ class AnalyticsEvent(models.Model):
         ('begin_checkout',   'Début checkout'),
         ('checkout_step',    'Étape checkout'),
         ('purchase',         'Achat'),
+        ('promo_applied',    'Code promo appliqué'),
         ('search',           'Recherche'),
         ('newsletter_sub',   'Inscription newsletter'),
     ]

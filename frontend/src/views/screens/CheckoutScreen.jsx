@@ -9,6 +9,7 @@ import apiInstance from '../../utils/axios'
 import { formatPrice } from '../../utils/currency'
 import { loc } from '../../utils/loc'
 import { events as analyticsEvents } from '../../analytics/analytics'
+import { pendingPromo } from '../../utils/promo'
 import './CheckoutScreen.css'
 
 const PROVINCES = [
@@ -116,8 +117,11 @@ function ShippingStep({ form, errors, onChange, rates, ratesLoading, ratesError,
                   checked={selectedRate?.code === rate.code} onChange={() => onSelectRate(rate)} />
                 <div className="shipping-option__info">
                   <span className="shipping-option__name">{rate.name}</span>
-                  {rate.days && rate.code !== 'pickup' && (
+                  {rate.days && !['pickup', 'accumulate'].includes(rate.code) && (
                     <span className="shipping-option__days">{rate.days} jour{rate.days !== '1' ? 's' : ''} ouvrable{rate.days !== '1' ? 's' : ''}</span>
+                  )}
+                  {rate.code === 'accumulate' && (
+                    <span className="shipping-option__days">Regrouper 3+ commandes pour livraison gratuite</span>
                   )}
                 </div>
                 <span className="shipping-option__price">
@@ -340,7 +344,8 @@ export default function CheckoutScreen() {
   const [ratesLoading, setRatesLoading] = useState(false)
   const [ratesError,   setRatesError]  = useState(null)
   const [selectedRate, setSelectedRate] = useState(null)
-  const ratesTimer = useRef(null)
+  const ratesTimer        = useRef(null)
+  const promoAutoApplied  = useRef(false)   // évite une double application
   const [paying,       setPaying]      = useState(false)
   const [payError,     setPayError]    = useState(null)
   const [promoCode,    setPromoCode]   = useState('')
@@ -395,6 +400,31 @@ export default function CheckoutScreen() {
     return () => clearTimeout(ratesTimer.current)
   }, [form.postal_code, cart])
 
+  // ── Auto-application du code promo détecté dans l'URL ──────────────────────
+  // Se déclenche dès que le panier est chargé, une seule fois par visite.
+  useEffect(() => {
+    if (!cart || promoCode || promoAutoApplied.current) return
+    const pending = pendingPromo.read()
+    if (!pending) return
+
+    promoAutoApplied.current = true
+    pendingPromo.clear()   // consommé — ne sera plus auto-appliqué si on revient
+
+    setPromoLoading(true)
+    setPromoError(null)
+    const subtotal = parseFloat(cart.subtotal || 0)
+    apiInstance.post('promo/apply/', { code: pending, subtotal, email: '' })
+      .then(({ data }) => {
+        setPromoCode(data.code)
+        setDiscount(parseFloat(data.discount_amount))
+        analyticsEvents.promoApplied(data.code, parseFloat(data.discount_amount), 'url_auto')
+      })
+      .catch(() => {
+        // Code invalide ou expiré — on ignore silencieusement
+      })
+      .finally(() => setPromoLoading(false))
+  }, [cart]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleChange = e => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
@@ -412,6 +442,7 @@ export default function CheckoutScreen() {
       const email = form.email?.trim() || ''
       const { data } = await apiInstance.post('promo/apply/', { code, subtotal, email })
       setPromoCode(data.code); setDiscount(parseFloat(data.discount_amount))
+      analyticsEvents.promoApplied(data.code, parseFloat(data.discount_amount), 'manual')
     } catch (err) {
       const msg = err?.response?.data?.detail || err?.response?.data?.error || 'Code promo invalide ou expiré.'
       setPromoError(msg)
